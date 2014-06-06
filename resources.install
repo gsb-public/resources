@@ -4,12 +4,22 @@
  * Implement hook_install().
  */
 function resources_install() {
+  // Move our application files ot the resources directory.
+  $module_assets = drupal_get_path('module', 'resources') . '/assets';
 
-  // Add resource image file type.
-  $type = new stdClass();
-  $type->type = 'resource_image';
-  $type->label = 'Resource Image';
-  $type->mimetypes = array(
-    'image/*',
+  // If the files directory doesn't exist create it.
+  $public_folder = 'public://resources-assets';
+  if (!file_exists($public_folder)) {
+    drupal_mkdir($public_folder);
+  }
+
+  // Assets to move.
+  $assets = array(
+    'application-twitter.png',
   );
+
+  // Move the assets.
+  foreach ($assets as $asset) {
+    file_unmanaged_copy($module_assets . '/' . $asset, $public_folder. '/' . $asset);
+  }
 }
