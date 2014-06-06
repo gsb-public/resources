@@ -1,0 +1,396 @@
+<?php
+
+// Include the resources files.
+// Defaults to includes/[resource name].resources.inc you can specify what it
+// should be by specifying include file in hook_resources_type_info().
+foreach (module_implements('resources_type_info') as $module) {
+  foreach (module_invoke($module, 'resources_type_info') as $resource_type => $resource_type_info) {
+    $include_file = 'includes/' . $resource_type . '.resources.inc';
+    if (!empty($resource_type_info['include file'])) {
+      $include_file = $resource_type_info['include file'];
+    }
+
+    $include_file = drupal_get_path('module', $module) . '/' . $include_file;
+    if (file_exists($include_file)) {
+      include_once($include_file);
+    }
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function resources_menu() {
+  $items = array();
+  // Adding a new resource.
+  $items['resources/%ctools_js/add/%/%'] = array(
+    'title' => 'Add resource',
+    'page callback' => 'resources_add',
+    'page arguments' => array(1, 3, 4),
+    // @todo.
+    'access callback' => TRUE,
+    'file' => 'includes/resources.admin.inc',
+  );
+  // Editing a resource.
+  $items['resources/%ctools_js/edit/%file/%'] = array(
+    'title' => 'Edit resource',
+    'page callback' => 'resources_edit',
+    'page arguments' => array(1, 3, 4),
+    // @todo.
+    'access callback' => TRUE,
+    'file' => 'includes/resources.admin.inc',
+  );
+  // Deleting a resource.
+  $items['resources/%ctools_js/delete/%file'] = array(
+    'title' => 'Delete resource',
+    'page callback' => 'resources_delete',
+    'page arguments' => array(1, 3),
+    // @todo.
+    'access callback' => TRUE,
+    'file' => 'includes/resources.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implement hook_resources_type_info().
+ *
+ * @return array
+ */
+function resources_resources_type_info() {
+  return array(
+    'resource_image' => array(
+      'label' => t('Resource Image'),
+      'scheme' => 'public',
+      'file type' => 'resource_image',
+      'upload' => array(
+        'file_directory' => 'resources',
+        'uri_scheme' => 'public',
+        'file_extensions' => 'jpg jpeg gif png',
+      ),
+    ),
+    'resource_twitter' => array(
+      'label' => t('Twitter Feed or Tweet'),
+      'scheme' => 'twitter',
+      'file type' => 'twitter',
+      'file presave callback' => 'resources_resource_twitter_presave',
+      'file formatter' => array(
+        'resources_resource_twitter_preview' => array(
+          'label' => t('Twitter Preview'),
+          'file types' => array('twitter'),
+          'default settings' => array(),
+          'view callback' => 'resources_resource_twitter_file_formatter_preview_view',
+        ),
+        'resources_resource_twitter_widget' => array(
+          'label' => t('Twitter Widget'),
+          'file types' => array('twitter'),
+          'default settings' => array(),
+          'view callback' => 'resources_resource_twitter_file_formatter_widget_view',
+        ),
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_file_formatter_info().
+ */
+function resources_file_formatter_info() {
+  // Get the resource type information.
+  $resource_types = module_invoke_all('resources_type_info');
+
+  $formatters = array();
+  // Figure out the resource type from the scheme.
+  foreach ($resource_types as $resource_type =>$resource_type_info) {
+    if (!empty($resource_type_info['file formatter'])) {
+      foreach ($resource_type_info['file formatter'] as $formatter => $formatter_info) {
+        $formatters[$formatter] = $formatter_info;
+      }
+    }
+  }
+
+  return $formatters;
+}
+
+/**
+ * Implement hook_stream_wrappers().
+ */
+function resources_stream_wrappers() {
+  $stream_wrappers = array();
+
+  $stream_wrappers['twitter'] = array(
+    'name' => t('A tweet/feed from twitter'),
+    'class' => 'ResourcesTwitterStreamWrapper',
+    'description' => t('Tweet/feed provided by Twitter.'),
+    'type' => STREAM_WRAPPERS_READ_VISIBLE,
+  );
+
+  return $stream_wrappers;
+}
+
+/**
+ * Implement hook_field_extra_fields().
+ */
+function resources_field_extra_fields() {
+  // Add our resources widget.
+  $extra['node']['page']['form']['resources'] = array(
+    'label' => t('Resources'),
+    'description' => t('Resources widget'),
+    'weight' => 0,
+  );
+
+  return $extra;
+}
+
+/**
+ * Implement hook_form_alter().
+ */
+function resources_form_page_node_form_alter(&$form, &$form_state) {
+  $entity_info = entity_get_info();
+  $view_mode_info = $entity_info['file']['view modes'];
+  $resources_markup = '';
+
+  // If we are on the edit form then get all the resources.
+  if ($nid = $form['nid']['#value']) {
+    // Find the resources from the file_usage table.
+    $result = db_query('SELECT * FROM {file_usage} f where f.id = :nid AND f.module = \'resources\'', array(':nid' => $nid));
+
+    $view_modes_cache = array();
+    // Loop through the results to find each fid.
+    foreach ($result as $file_usage) {
+      // Get the file.
+      $file = file_load($file_usage->fid);
+
+      $view_modes = array();
+
+      // If we haven't built the list of view modes for this bundle then build it.
+      if (empty($view_modes_cache[$file->type])) {
+        // Get all the view mode settings.
+        $view_mode_settings = field_view_mode_settings('file', $file->type);
+        // Loop through the view modes looking for one's that are enabled.
+        foreach ($view_mode_settings as $view_mode => $settings) {
+          if ($view_mode !== 'preview' && $settings['custom_settings']) {
+            $view_modes[$view_mode] = $view_mode_info[$view_mode]['label'];
+          }
+        }
+
+        // Cache it so we don't have to build it again if we have the same type.
+        $view_modes_cache[$file->type] = $view_modes;
+      }
+      else {
+        // The view mode was in the cache so take it.
+        $view_modes = $view_modes_cache[$file->type];
+      }
+
+      // Get our markup for the resource preview.
+      $resources_markup .= _resources_generate_resource_preview_html($file, $nid, $view_modes);
+    }
+  }
+
+  $resource_types = module_invoke_all('resources_type_info');
+
+  //Build the add links.
+  $add_links = '';
+  foreach ($resource_types as $resource_type => $info) {
+    $link = _resources_modal_link(t('Add @type', array('@type' => $info['label'])), 'resources/nojs/add/' . $resource_type . '/' . $nid);
+    $add_links .= '<li>' . $link . '</li>';
+  }
+
+  // Add our resources form elements.
+  $form['resources'] = array(
+    '#type' => 'container',
+  );
+  $form['resources']['widget'] = array(
+    '#markup' => '<div class="resources-wrapper"><h4>' . t('Add Resources') . '</h4><ul>' . $add_links . '</ul><div class="resources">' . $resources_markup . '</div></div>',
+  );
+
+  // If this is a new node then add our resources ids text field.
+  if (empty($nid)) {
+    $form['resources']['resources_ids'] = array(
+      '#type' => 'textfield',
+      '#title' => t('resource ids'),
+    );
+  }
+
+  // Add our custom javascript.
+  $form['#attached']['js'][] = drupal_get_path('module', 'resources') . '/js/resources.js';
+}
+
+/**
+ * Implement hook_node_insert().
+ */
+function resources_node_insert($node) {
+  // If resources were added add them to the file usage table.
+  if (!empty($node->resources_ids)) {
+    // They are concatenated by ;
+    $fids = explode(';', $node->resources_ids);
+
+    // Loop through them to add to the usage table.
+    foreach ($fids as $fid) {
+      $file = new stdClass();
+      $file->fid = $fid;
+      file_usage_add($file, 'resources', 'node', $node->nid);
+    }
+  }
+}
+
+/**
+ * Helper function to generate the html for resources in administration interface.
+ *
+ * @param $file
+ * @param $nid
+ * @param array $view_modes
+ * @return string
+ */
+function _resources_generate_resource_preview_html($file, $nid, $view_modes = array()) {
+  // If we don't have any view modes then find them.
+  if (empty($view_modes)) {
+    $entity_info = entity_get_info();
+    $view_mode_info = $entity_info['file']['view modes'];
+
+    // Get all the view modes for the bundle.
+    $view_mode_settings = field_view_mode_settings('file', $file->type);
+
+    // Loop through each view mode to see if they are enabled.
+    foreach ($view_mode_settings as $view_mode => $settings) {
+      if ($settings['custom_settings'] && $view_mode !== 'preview') {
+        $view_modes[$view_mode] = $view_mode_info[$view_mode]['label'];
+      }
+    }
+  }
+
+  if (!empty($view_modes)) {
+    // Build the view mode options.
+    $view_mode_options = '<div class="resource-view-mode-selection"><select>';
+    foreach ($view_modes as $view_mode => $label) {
+      $view_mode_options .= '<option value="' . $view_mode . '">' . $label . '</option>';
+    }
+    $view_mode_options .= '</select></div>';
+  }
+
+
+  // Render a preview of the file.
+  $file_render_array = file_view_file($file, 'preview');
+  $rendered_file = drupal_render($file_render_array);
+
+  // build the operation links.
+  $attributes = array(
+    'class' => array(
+      'resource-insert',
+    ),
+    'data-resource-info' => '[[resource::fid:' . $file->fid . '::name:' . $file->filename . '::type:' . $file->type . '::display:',
+  );
+  $add_link = l(t('Insert'), '#', array('attributes' => $attributes, 'external' => TRUE));
+  $edit_link = _resources_modal_link(t('Edit'), 'resources/nojs/edit/' . $file->fid . '/' . $nid);
+  $delete_link = _resources_modal_link(t('Delete'), 'resources/nojs/delete/' . $file->fid);
+
+  // Put all the markup together.
+  $markup = '';
+  $markup .= '<div id="resource-' . $file->fid . '" class="resource">';
+  $markup .= '<div class="resource-preview">' . $rendered_file . '</div>';
+  $markup .= '<div class="resource-name">' . $file->filename . '</div>';
+  $markup .=  !empty($view_mode_options) ? $view_mode_options : '';
+  $markup .= '<div class="resource-operations">' . $add_link . ' ' . $edit_link . ' ' . $delete_link . '</div>';
+  $markup .= '</div>';
+
+  return $markup;
+}
+
+/**
+ * Implements hook_filter_info().
+ */
+function resources_filter_info() {
+  $filters['resources_filter'] = array(
+    'title' => t('Convert Resources tags to markup'),
+    'description' => t('This filter will convert [[resource::]] tags into markup.'),
+    'process callback' => 'resources_filter',
+    'weight' => 2,
+  );
+
+  return $filters;
+}
+
+/**
+ * Filter callback for media markup filter.
+ *
+ * @TODO check for security probably pass text through filter_xss
+ */
+function resources_filter($text) {
+  $text = preg_replace_callback('/\[\[resource::.*?\]\]/s', 'resources_token_to_markup', $text);
+  return $text;
+}
+
+/**
+ * Replace callback to convert a resource tag into HTML markup.
+ *
+ * @param string $match
+ *   Takes a match of tag code
+ *
+ * @return string
+ *   The HTML markup representation of the tag, or an empty string on failure.
+ *
+ */
+function resources_token_to_markup($match) {
+  // Strip brackets
+  $match = str_replace("[[", "", $match);
+  $match = str_replace("]]", "", $match);
+  $tag = $match[0];
+
+  // Split up the bigger piecew.
+  $options = explode('::', $tag);
+  $parameters = array();
+
+  // Loop through all the tag/value sets.
+  foreach ($options as $index => $option) {
+    // Make sure we are not on the first one.
+    if ($index > 0) {
+      // Find the key value pairs.
+      $option_value = explode(':', $option);
+
+      $key = array_shift($option_value);
+      $value = implode(':', $option_value);
+      $parameters = array_merge($parameters, array($key => $value));
+    }
+  }
+
+  try {
+    // Ensure we have a file id.
+    if (!isset($parameters['fid'])) {
+      throw new Exception('No file Id');
+    }
+
+    // Ensure a valid view mode is being requested.
+    if (!isset($parameters['display'])) {
+      throw new Exception('No display');
+    }
+
+    $file = file_load($parameters['fid']);
+    if (!$file) {
+      throw new Exception('Could not load media object');
+    }
+    $parameters['file'] = $file;
+  }
+  catch (Exception $e) {
+    watchdog('resources', 'Unable to render media from %tag. Error: %error', array('%tag' => $tag, '%error' => $e->getMessage()));
+    return '';
+  }
+
+  // Render the file.
+  $element = file_view_file($parameters['file'], $parameters['display']);
+  return drupal_render($element);
+}
+
+/**
+ * Helper function for a modal link.
+ *
+ * @param string $text
+ * @param string $url
+ *
+ * @return string
+ */
+function _resources_modal_link($text, $url) {
+  ctools_include('ajax');
+  ctools_include('modal');
+  ctools_modal_add_js();
+  return ctools_modal_text_button($text, $url, $text);
+}

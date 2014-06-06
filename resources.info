@@ -1,0 +1,9 @@
+name = Resources
+package = Media
+core = 7.x
+description = "Adds resources to node pages."
+
+dependencies[] = file_entity
+
+files[] = includes/ResourcesReadOnlyStreamWrapper.inc
+files[] = includes/ResourcesTwitterStreamWrapper.inc

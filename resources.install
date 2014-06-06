@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * Implement hook_install().
+ */
+function resources_install() {
+
+  // Add resource image file type.
+  $type = new stdClass();
+  $type->type = 'resource_image';
+  $type->label = 'Resource Image';
+  $type->mimetypes = array(
+    'image/*',
+  );
+}
