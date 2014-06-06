@@ -87,12 +87,13 @@ function resources_add_form($form, &$form_state) {
   $resource_types = module_invoke_all('resources_type_info');
   $resource_type = $form_state['resource_type'];
   $resource_type_info = $resource_types[$resource_type];
+  $file_type = variable_get('resources_' . $resource_type . '_file_type', '');
 
   // Values that are specific to this resource type that are needed by
   // file_entity functions.
   $perm_values = array(
     'scheme' => $resource_type_info['scheme'],
-    'type' => $resource_type_info['file type'],
+    'type' => $file_type,
   );
 
   foreach ($perm_values as $key => $value) {
@@ -131,7 +132,7 @@ function resources_add_form($form, &$form_state) {
 
   // Create a file object with just the file type so we can pull the right form.
   $file = new stdClass();
-  $file->type = $resource_type_info['file type'];
+  $file->type = $file_type;
 
   // Add fields from image bundle.
   field_attach_form('file', $file, $form, $form_state);
@@ -171,9 +172,10 @@ function resources_add_form_submit($form, &$form_state) {
   $resource_types = module_invoke_all('resources_type_info');
   $resource_type = $form_state['resource_type'];
   $resource_type_info = $resource_types[$resource_type];
+  $file_type = variable_get('resources_' . $resource_type . '_file_type', '');
 
   // Give it a type and default to displayed.
-  $file->type = $resource_type_info['file type'];
+  $file->type = $file_type;
   $file->display = TRUE;
 
   // If a filename is specified set the file filename to that.
@@ -222,7 +224,7 @@ function resources_edit($js, $file, $nid) {
 
   // Figure out the resource type from the scheme.
   foreach ($resource_types as $resource_type =>$resource_type_info) {
-    if ($resource_type_info['file type'] === $file->type) {
+    if (variable_get('resources_' . $resource_type . '_file_type', '') === $file->type) {
       $form_state['resource_type'] = $resource_type;
       break;
     }

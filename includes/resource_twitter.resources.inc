@@ -75,7 +75,8 @@ function resources_resource_twitter_parse($url, $widget_id = NULL) {
     return FALSE;
   }
 
-  $params['w'] = empty($widget_id)?'473904592300683264':$widget_id;
+  $default_widget_id = variable_get('resources_default_resource_twitter_widget_id', '');
+  $params['w'] = empty($widget_id) ? $default_widget_id : $widget_id;
 
   $uri = $scheme;
   foreach ($params as $key => $value) {

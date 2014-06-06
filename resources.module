@@ -49,6 +49,33 @@ function resources_menu() {
     'access callback' => TRUE,
     'file' => 'includes/resources.overlay_form.inc',
   );
+
+  // Admin form
+  $items['admin/config/media/resources'] = array(
+    'title' => 'Resources settings',
+    'description' => 'Configure the behavior of resources.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('resources_admin_config'),
+    'access arguments' => array('administer content'),
+    'file' => 'includes/resources.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['admin/config/media/resources/settings'] = array(
+    'title' => 'Resources',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  // Admin form
+  $items['admin/config/media/resources/twitter'] = array(
+    'title' => 'Twitter',
+    'description' => 'Configure the behavior of resources.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('resources_resource_twitter_admin_config'),
+    'access arguments' => array('administer content'),
+    'file' => 'includes/resources.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
   return $items;
 }
 
@@ -58,38 +85,38 @@ function resources_menu() {
  * @return array
  */
 function resources_resources_type_info() {
-  return array(
-    'resource_image' => array(
-      'label' => t('Resource Image'),
-      'scheme' => 'public',
-      'file type' => 'resource_image',
-      'upload' => array(
-        'file_directory' => 'resources',
-        'uri_scheme' => 'public',
-        'file_extensions' => 'jpg jpeg gif png',
-      ),
+  $resource_types['resource_image'] = array(
+    'label' => t('Resource Image'),
+    'scheme' => 'public',
+    'upload' => array(
+      'file_directory' => 'resources',
+      'uri_scheme' => 'public',
+      'file_extensions' => 'jpg jpeg gif png',
     ),
-    'resource_twitter' => array(
-      'label' => t('Twitter Feed or Tweet'),
-      'scheme' => 'twitter',
-      'file type' => 'twitter',
-      'file presave callback' => 'resources_resource_twitter_presave',
-      'file formatter' => array(
-        'resources_resource_twitter_preview' => array(
-          'label' => t('Twitter Preview'),
-          'file types' => array('twitter'),
-          'default settings' => array(),
-          'view callback' => 'resources_resource_twitter_file_formatter_preview_view',
-        ),
-        'resources_resource_twitter_widget' => array(
-          'label' => t('Twitter Widget'),
-          'file types' => array('twitter'),
-          'default settings' => array(),
-          'view callback' => 'resources_resource_twitter_file_formatter_widget_view',
-        ),
+  );
+
+  $twitter_file_type = variable_get('resources_resource_twitter_file_type', '');
+  $resource_types['resource_twitter'] = array(
+    'label' => t('Twitter Feed or Tweet'),
+    'scheme' => 'twitter',
+    'file presave callback' => 'resources_resource_twitter_presave',
+    'file formatter' => array(
+      'resources_resource_twitter_preview' => array(
+        'label' => t('Twitter Preview'),
+        'file types' => array($twitter_file_type),
+        'default settings' => array(),
+        'view callback' => 'resources_resource_twitter_file_formatter_preview_view',
+      ),
+      'resources_resource_twitter_widget' => array(
+        'label' => t('Twitter Widget'),
+        'file types' => array($twitter_file_type),
+        'default settings' => array(),
+        'view callback' => 'resources_resource_twitter_file_formatter_widget_view',
       ),
     ),
   );
+
+  return $resource_types;
 }
 
 /**
