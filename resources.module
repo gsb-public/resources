@@ -76,30 +76,15 @@ function resources_resources_type_info() {
     'upload' => array(
       'file_directory' => 'resources',
       'uri_scheme' => 'public',
-      'file_ext ensions' => 'jpg jpeg gif png',
+      'file_extensions' => 'jpg jpeg gif png',
     ),
   );
 
-  $twitter_file_type = variable_get('resources_resource_twitter_file_type', '');
   $resource_types['resource_twitter'] = array(
     'label' => t('Twitter Feed or Tweet'),
     'scheme' => 'twitter',
     'file presave callback' => 'resources_resource_twitter_presave',
     'settings callback' => 'resources_resource_twitter_settings_form',
-    'file formatter' => array(
-      'resources_resource_twitter_preview' => array(
-        'label' => t('Twitter Preview'),
-        'file types' => array($twitter_file_type),
-        'default settings' => array(),
-        'view callback' => 'resources_resource_twitter_file_formatter_preview_view',
-      ),
-      'resources_resource_twitter_widget' => array(
-        'label' => t('Twitter Widget'),
-        'file types' => array($twitter_file_type),
-        'default settings' => array(),
-        'view callback' => 'resources_resource_twitter_file_formatter_widget_view',
-      ),
-    ),
   );
 
   return $resource_types;
@@ -109,18 +94,21 @@ function resources_resources_type_info() {
  * Implements hook_file_formatter_info().
  */
 function resources_file_formatter_info() {
-  // Get the resource type information.
-  $resource_types = module_invoke_all('resources_type_info');
-
-  $formatters = array();
-  // Figure out the resource type from the scheme.
-  foreach ($resource_types as $resource_type =>$resource_type_info) {
-    if (!empty($resource_type_info['file formatter'])) {
-      foreach ($resource_type_info['file formatter'] as $formatter => $formatter_info) {
-        $formatters[$formatter] = $formatter_info;
-      }
-    }
-  }
+  $twitter_file_type = variable_get('resources_resource_twitter_file_type', '');
+  $formatters = array(
+    'resources_resource_twitter_preview' => array(
+      'label' => t('Twitter Preview'),
+      'file types' => array($twitter_file_type),
+      'default settings' => array(),
+      'view callback' => 'resources_resource_twitter_file_formatter_preview_view',
+    ),
+    'resources_resource_twitter_widget' => array(
+      'label' => t('Twitter Widget'),
+      'file types' => array($twitter_file_type),
+      'default settings' => array(),
+      'view callback' => 'resources_resource_twitter_file_formatter_widget_view',
+    ),
+  );
 
   return $formatters;
 }
