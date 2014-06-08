@@ -155,3 +155,20 @@ function resources_resource_twitter_file_formatter_widget_view($file, $display, 
 
   return $element;
 }
+
+/**
+ * Settings form elements.
+ *
+ * @return mixed
+ */
+function resources_resource_twitter_settings_form() {
+  // We need a default twitter widget id.
+  $form['resources_default_resource_twitter_widget_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Default Twitter Widget ID'),
+    '#required' => FALSE,
+    '#default_value' => variable_get('resources_default_resource_twitter_widget_id', ''),
+  );
+
+  return $form;
+}

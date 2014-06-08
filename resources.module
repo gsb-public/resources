@@ -58,24 +58,8 @@ function resources_menu() {
     'page arguments' => array('resources_admin_config'),
     'access arguments' => array('administer content'),
     'file' => 'includes/resources.admin.inc',
-    'type' => MENU_NORMAL_ITEM,
   );
 
-  $items['admin/config/media/resources/settings'] = array(
-    'title' => 'Resources',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-  );
-
-  // Admin form
-  $items['admin/config/media/resources/twitter'] = array(
-    'title' => 'Twitter',
-    'description' => 'Configure the behavior of resources.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('resources_resource_twitter_admin_config'),
-    'access arguments' => array('administer content'),
-    'file' => 'includes/resources.admin.inc',
-    'type' => MENU_LOCAL_TASK,
-  );
   return $items;
 }
 
@@ -88,10 +72,11 @@ function resources_resources_type_info() {
   $resource_types['resource_image'] = array(
     'label' => t('Resource Image'),
     'scheme' => 'public',
+    'include file' => '',
     'upload' => array(
       'file_directory' => 'resources',
       'uri_scheme' => 'public',
-      'file_extensions' => 'jpg jpeg gif png',
+      'file_ext ensions' => 'jpg jpeg gif png',
     ),
   );
 
@@ -100,6 +85,7 @@ function resources_resources_type_info() {
     'label' => t('Twitter Feed or Tweet'),
     'scheme' => 'twitter',
     'file presave callback' => 'resources_resource_twitter_presave',
+    'settings callback' => 'resources_resource_twitter_settings_form',
     'file formatter' => array(
       'resources_resource_twitter_preview' => array(
         'label' => t('Twitter Preview'),
