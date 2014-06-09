@@ -53,7 +53,7 @@ function resources_add($js, $type, $nid) {
     if (isset($form_state['file']->fid)) {
 
       // If we are editing a node then save directly to the usage table.
-      if (!empty($nid)) {
+      if ($nid !== 'new') {
         file_usage_add($form_state['file'], 'resources', 'node', $nid);
       }
 
@@ -61,7 +61,7 @@ function resources_add($js, $type, $nid) {
       // Pass the rendered output of a resource and the fid.
       $commands[] = array(
         'command' => 'resources_add_resource',
-        'resource' => _resources_generate_resource_preview_html($form_state['file'], $nid),
+        'resource' => _resources_generate_resource_preview_html($form_state['file']),
         'fid' => $form_state['file']->fid,
       );
     }
@@ -92,7 +92,7 @@ function resources_add_form($form, &$form_state) {
   // Values that are specific to this resource type that are needed by
   // file_entity functions.
   $perm_values = array(
-    'scheme' => $resource_type_info['scheme'],
+    //'scheme' => $resource_type_info['scheme'],
     'type' => $file_type,
   );
 
@@ -209,10 +209,9 @@ function resources_add_form_submit($form, &$form_state) {
  *
  * @param $js
  * @param $file
- * @param $nid
  * @return form
  */
-function resources_edit($js, $file, $nid) {
+function resources_edit($js, $file) {
 
   // Setup ctools modal variables.
   $form_state['ajax'] = $js;
@@ -269,7 +268,7 @@ function resources_edit($js, $file, $nid) {
     // Pass the rendered output of a resource and the fid.
     $commands[] = array(
       'command' => 'resources_edit_resource',
-      'resource' => _resources_generate_resource_preview_html($form_state['file'], $nid),
+      'resource' => _resources_generate_resource_preview_html($form_state['file']),
       'fid' => $form_state['file']->fid,
     );
 
@@ -300,10 +299,12 @@ function resources_edit_form($form, &$form_state) {
     module_load_include('inc', 'file_entity', 'file_entity.pages');
 
     // Set the scheme
+    /**
     $form['scheme'] = array(
       '#type' => 'value',
       '#value' => $resource_type_info['scheme'],
     );
+     **/
 
     // Basic file information.
     // These elements are just values so they are not even sent to the client.

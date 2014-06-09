@@ -32,10 +32,10 @@ function resources_menu() {
     'file' => 'includes/resources.overlay_form.inc',
   );
   // Editing a resource.
-  $items['resources/%ctools_js/edit/%file/%'] = array(
+  $items['resources/%ctools_js/edit/%file'] = array(
     'title' => 'Edit resource',
     'page callback' => 'resources_edit',
-    'page arguments' => array(1, 3, 4),
+    'page arguments' => array(1, 3),
     // @todo.
     'access callback' => TRUE,
     'file' => 'includes/resources.overlay_form.inc',
@@ -151,6 +151,7 @@ function resources_form_page_node_form_alter(&$form, &$form_state) {
   $view_mode_info = $entity_info['file']['view modes'];
   $resources_markup = '';
 
+  dpm($form);
   // If we are on the edit form then get all the resources.
   if ($nid = $form['nid']['#value']) {
     // Find the resources from the file_usage table.
@@ -184,8 +185,11 @@ function resources_form_page_node_form_alter(&$form, &$form_state) {
       }
 
       // Get our markup for the resource preview.
-      $resources_markup .= _resources_generate_resource_preview_html($file, $nid, $view_modes);
+      $resources_markup .= _resources_generate_resource_preview_html($file, $view_modes);
     }
+  }
+  else {
+    $nid = 'new';
   }
 
   $resource_types = module_invoke_all('resources_type_info');
@@ -206,7 +210,7 @@ function resources_form_page_node_form_alter(&$form, &$form_state) {
   );
 
   // If this is a new node then add our resources ids text field.
-  if (empty($nid)) {
+  if ($nid === 'new') {
     $form['resources']['resources_ids'] = array(
       '#type' => 'textfield',
       '#title' => t('resource ids'),
@@ -243,7 +247,7 @@ function resources_node_insert($node) {
  * @param array $view_modes
  * @return string
  */
-function _resources_generate_resource_preview_html($file, $nid, $view_modes = array()) {
+function _resources_generate_resource_preview_html($file, $view_modes = array()) {
   // If we don't have any view modes then find them.
   if (empty($view_modes)) {
     $entity_info = entity_get_info();
@@ -282,7 +286,7 @@ function _resources_generate_resource_preview_html($file, $nid, $view_modes = ar
     'data-resource-info' => '[[resource::fid:' . $file->fid . '::name:' . $file->filename . '::type:' . $file->type . '::display:',
   );
   $add_link = l(t('Insert'), '#', array('attributes' => $attributes, 'external' => TRUE));
-  $edit_link = _resources_modal_link(t('Edit'), 'resources/nojs/edit/' . $file->fid . '/' . $nid);
+  $edit_link = _resources_modal_link(t('Edit'), 'resources/nojs/edit/' . $file->fid);
   $delete_link = _resources_modal_link(t('Delete'), 'resources/nojs/delete/' . $file->fid);
 
   // Put all the markup together.
