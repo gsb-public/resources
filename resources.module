@@ -87,6 +87,12 @@ function resources_resources_type_info() {
     'settings callback' => 'resources_resource_twitter_settings_form',
   );
 
+  $resource_types['resource_youtube'] = array(
+    'label' => t('Youtube video'),
+    'unique_uri' => TRUE,
+    'file presave callback' => 'resources_resource_youtube_presave',
+  );
+
   return $resource_types;
 }
 
@@ -108,9 +114,57 @@ function resources_file_formatter_info() {
       'default settings' => array(),
       'view callback' => 'resources_resource_twitter_file_formatter_widget_view',
     ),
+    'resources_resource_youtube_video' => array(
+      'label' => t('Resources: YouTube Video'),
+      'file types' => array('video'),
+      'default settings' => array(
+        'width' => 640,
+        'height' => 390,
+        'autohide' => 2,
+        'autoplay' => FALSE,
+        'color' => 'red',
+        'enablejsapi' => FALSE,
+        'loop' => FALSE,
+        'modestbranding' => FALSE,
+        'nocookie' => FALSE,
+        'origin' => '',
+        'protocol' => 'https:',
+        'protocol_specify' => FALSE,
+        'rel' => TRUE,
+        'showinfo' => TRUE,
+        'theme' => 'dark',
+      ),
+      'view callback' => 'resources_resource_youtube_file_formatter_video_view',
+      'settings callback' => 'resources_resource_youtube_file_formatter_video_settings',
+    ),
+
+    'resources_resource_youtube_image' => array(
+      'label' => t('Resources: YouTube Preview Image'),
+      'file types' => array('video'),
+      'default settings' => array(
+        'image_style' => '',
+      ),
+      'view callback' => 'resources_resource_youtube_file_formatter_image_view',
+      'settings callback' => 'resources_resource_youtube_file_formatter_image_settings',
+    ),
   );
 
   return $formatters;
+}
+
+
+/**
+ * Implements hook_theme().
+ */
+function resources_theme($existing, $type, $theme, $path) {
+  return array(
+    'resource_youtube_video' => array(
+      'variables' => array('uri' => NULL, 'options' => array()),
+      'file' => 'resource_youtube.theme.inc',
+      'path' => $path . '/themes',
+      'template' => 'resource-youtube-video',
+    ),
+  );
 }
 
 /**
@@ -123,6 +177,13 @@ function resources_stream_wrappers() {
     'name' => t('A tweet/feed from twitter'),
     'class' => 'ResourcesTwitterStreamWrapper',
     'description' => t('Tweet/feed provided by Twitter.'),
+    'type' => STREAM_WRAPPERS_READ_VISIBLE,
+  );
+
+  $stream_wrappers['ryoutube'] = array(
+    'name' => t('Resources: YouTube video'),
+    'class' => 'ResourcesYouTubeStreamWrapper',
+    'description' => t('YouTube video.'),
     'type' => STREAM_WRAPPERS_READ_VISIBLE,
   );
 
