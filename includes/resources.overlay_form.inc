@@ -191,7 +191,9 @@ function resources_add_form_submit($form, &$form_state) {
   // Append a hash when saving files so that URI is unique,
   // this in needed in order to create new resources with same URI and not reuse existing.
   if (isset($resource_type_info['unique_uri']) && $resource_type_info['unique_uri']) {
-    $file->uri .= '/hash/' . uniqid();
+    if (isset($file->uri)) {
+      $file->uri .= '/hash/' . uniqid();
+    }
   }
 
   // Save the form fields.

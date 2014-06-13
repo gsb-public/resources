@@ -137,7 +137,6 @@ function resources_file_formatter_info() {
       'view callback' => 'resources_resource_youtube_file_formatter_video_view',
       'settings callback' => 'resources_resource_youtube_file_formatter_video_settings',
     ),
-
     'resources_resource_youtube_image' => array(
       'label' => t('Resources: YouTube Preview Image'),
       'file types' => array('video'),
@@ -146,6 +145,10 @@ function resources_file_formatter_info() {
       ),
       'view callback' => 'resources_resource_youtube_file_formatter_image_view',
       'settings callback' => 'resources_resource_youtube_file_formatter_image_settings',
+    ),
+    'resources_file_fields' => array(
+      'label' => t('Resources: File fields only'),
+      'view callback' => 'resources_file_fields_view',
     ),
   );
 
@@ -184,6 +187,13 @@ function resources_stream_wrappers() {
     'name' => t('Resources: YouTube video'),
     'class' => 'ResourcesYouTubeStreamWrapper',
     'description' => t('YouTube video.'),
+    'type' => STREAM_WRAPPERS_READ_VISIBLE,
+  );
+
+  $stream_wrappers['entity'] = array(
+    'name' => t('Resources: Rendered file entity'),
+    'class' => 'ResourcesEntityStreamWrapper',
+    'description' => t('This stream wrapper doesn\'t do anything, it is just needed for file system to work. We use file entity as a generic entity and rendering just fields.'),
     'type' => STREAM_WRAPPERS_READ_VISIBLE,
   );
 
@@ -459,4 +469,24 @@ function _resources_modal_link($text, $url) {
   ctools_include('modal');
   ctools_modal_add_js();
   return ctools_modal_text_button($text, $url, $text);
+}
+
+/**
+ * Render file entity fields callback.
+ */
+function resources_file_fields_view($file, $display, $langcode) {
+  field_attach_prepare_view('file', array($file->fid => $file), $display['view_mode']);
+  $element = field_attach_view('file', $file, $display['view_mode'], $langcode);
+
+  return $element;
+}
+
+/**
+ * Implements hook_file_displays_alter().
+ *  - Append view mode to display array so we can use it in our formatter.
+ */
+function resources_file_displays_alter(&$displays, $file, $view_mode) {
+  if (isset($displays['resources_file_fields'])) {
+    $displays['resources_file_fields']['view_mode'] = $view_mode;
+  }
 }
