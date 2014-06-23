@@ -1,17 +1,17 @@
 <?php
 
 /**
- *  @file resources/includes/ResourcesEntityStreamWrapper.inc
+ *  @file resources/includes/ResourcesGenericResourceStreamWrapper.inc
  *
- *  Create a Entity Stream Wrapper class for the Resources module.
+ *  Create a Generic Resource Stream Wrapper class for the Resources module.
  */
 
 /**
- * @class ResourcesEntityStreamWrapper
+ * @class ResourcesGenericResourceStreamWrapper
  *   Generic stream wrapper to be used for rendering files that don't have any URL that makes sense.
  *   The only parameter here is h, which is the hash that will be created on file create.
  */
-class ResourcesEntityStreamWrapper extends ResourcesReadOnlyStreamWrapper {
+class ResourcesGenericResourceStreamWrapper extends ResourcesReadOnlyStreamWrapper {
   protected $parameters = array('h' => NULL);
 
   /**
@@ -22,7 +22,7 @@ class ResourcesEntityStreamWrapper extends ResourcesReadOnlyStreamWrapper {
   }
 
   static function getMimeType($uri, $mapping = NULL) {
-    return 'application/entity';
+    return 'application/resource';
   }
 
   function getTarget($f) {

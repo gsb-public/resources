@@ -185,7 +185,7 @@ function resources_add_form_submit($form, &$form_state) {
 
   // Let the resource type owner alter the file data.
   if (!empty($resource_type_info['file presave callback'])) {
-    $file = call_user_func($resource_type_info['file presave callback'], $file, $form, $form_state);
+    $file = call_user_func($resource_type_info['file presave callback'], $file, $form, $form_state, $resource_type_info);
   }
 
   // Append a hash when saving files so that URI is unique,
@@ -417,7 +417,7 @@ function resources_edit_form_submit($form, &$form_state) {
 
   // Let the resource type owner alter the file data.
   if (!empty($resource_type_info['file presave callback'])) {
-    $file = call_user_func($resource_type_info['file presave callback'], $file, $form, $form_state);
+    $file = call_user_func($resource_type_info['file presave callback'], $file, $form, $form_state, $resource_type_info);
   }
 
   // Run entity form submit handling and save the file.

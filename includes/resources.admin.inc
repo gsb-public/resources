@@ -18,7 +18,7 @@ function resources_admin_config($form, $form_state) {
 
   // Get all the resource types and build the settings form for one resource
   // each.
-  $resource_types = module_invoke_all('resources_type_info');
+  $resource_types = resources_get_info();
   foreach ($resource_types as $resource_type => $resource_type_info) {
     // Provide a wrapper for the resource.
     $form[$resource_type] = array(

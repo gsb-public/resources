@@ -1,16 +1,20 @@
 <?php
 
-// Include the resources files.
-// Defaults to includes/[resource name].resources.inc you can specify what it
-// should be by specifying include file in hook_resources_type_info().
-foreach (module_implements('resources_type_info') as $module) {
-  foreach (module_invoke($module, 'resources_type_info') as $resource_type => $resource_type_info) {
+// Hooks and callbacks for integrating with File Entity module for display.
+require_once dirname(__FILE__) . '/includes/resources.formatters.inc';
+
+function resources_init() {
+  // Include the resources files.
+  // Defaults to includes/[resource name].resources.inc you can specify what it
+  // should be by specifying include file in hook_resources_type_info().
+  // @todo: Find a better way to include this only on pages where resources are actually used. Or at least in hook_init().
+  foreach (resources_get_info() as $resource_type => $resource_type_info) {
     $include_file = 'includes/' . $resource_type . '.resources.inc';
     if (!empty($resource_type_info['include file'])) {
       $include_file = $resource_type_info['include file'];
     }
 
-    $include_file = drupal_get_path('module', $module) . '/' . $include_file;
+    $include_file = drupal_get_path('module', $resource_type_info['module']) . '/' . $include_file;
     if (file_exists($include_file)) {
       include_once($include_file);
     }
@@ -85,10 +89,13 @@ function resources_resources_type_info() {
     'scheme' => 'twitter',
     'file presave callback' => 'resources_resource_twitter_presave',
     'settings callback' => 'resources_resource_twitter_settings_form',
+    'icon' => 'application-twitter.png',
+    'icon path' => drupal_get_path('module', 'resources') . '/assets',
   );
 
   $resource_types['resource_youtube'] = array(
     'label' => t('Youtube video'),
+    'scheme' => 'ryoutube',
     'unique_uri' => TRUE,
     'file presave callback' => 'resources_resource_youtube_presave',
   );
@@ -97,64 +104,102 @@ function resources_resources_type_info() {
 }
 
 /**
- * Implements hook_file_formatter_info().
+ * Get resources types info array of a resource type.
+ *
+ * @param null|string $type
+ *   The resource type, e.g. resource_twitter, for which the info shall be returned, or NULL
+ *   to return an array with info about all types.
+ *
+ * @return array $info
+ *   Resources types info array.
+ * @see hook_resources_type_info()
+ * @see hook_resources_type_info_alter()
  */
-function resources_file_formatter_info() {
-  $twitter_file_type = variable_get('resources_resource_twitter_file_type', '');
-  $formatters = array(
-    'resources_resource_twitter_preview' => array(
-      'label' => t('Twitter Preview'),
-      'file types' => array($twitter_file_type),
-      'default settings' => array(),
-      'view callback' => 'resources_resource_twitter_file_formatter_preview_view',
-    ),
-    'resources_resource_twitter_widget' => array(
-      'label' => t('Twitter Widget'),
-      'file types' => array($twitter_file_type),
-      'default settings' => array(),
-      'view callback' => 'resources_resource_twitter_file_formatter_widget_view',
-    ),
-    'resources_resource_youtube_video' => array(
-      'label' => t('Resources: YouTube Video'),
-      'file types' => array('video'),
-      'default settings' => array(
-        'width' => 640,
-        'height' => 390,
-        'autohide' => 2,
-        'autoplay' => FALSE,
-        'color' => 'red',
-        'enablejsapi' => FALSE,
-        'loop' => FALSE,
-        'modestbranding' => FALSE,
-        'nocookie' => FALSE,
-        'origin' => '',
-        'protocol' => 'https:',
-        'protocol_specify' => FALSE,
-        'rel' => TRUE,
-        'showinfo' => TRUE,
-        'theme' => 'dark',
-      ),
-      'view callback' => 'resources_resource_youtube_file_formatter_video_view',
-      'settings callback' => 'resources_resource_youtube_file_formatter_video_settings',
-    ),
-    'resources_resource_youtube_image' => array(
-      'label' => t('Resources: YouTube Preview Image'),
-      'file types' => array('video'),
-      'default settings' => array(
-        'image_style' => '',
-      ),
-      'view callback' => 'resources_resource_youtube_file_formatter_image_view',
-      'settings callback' => 'resources_resource_youtube_file_formatter_image_settings',
-    ),
-    'resources_file_fields' => array(
-      'label' => t('Resources: File fields only'),
-      'view callback' => 'resources_file_fields_view',
-    ),
-  );
+function resources_get_info($type = NULL) {
+  $resources_type_info = &drupal_static(__FUNCTION__);
 
-  return $formatters;
+  if (empty($resources_type_info)) {
+    if ($cache = cache_get('resources_type_info')) {
+      $resources_type_info = $cache->data;
+    }
+    else {
+      $resources_type_info = array();
+      foreach (module_implements('resources_type_info') as $module) {
+        $resources_type_info_module = module_invoke($module, 'resources_type_info');
+        foreach ($resources_type_info_module as &$resource_type_info) {
+          // Adding some defaults here.
+          $resource_type_info += array(
+            'module' => $module,
+            'use generic streamwrapper' => FALSE,
+            'unique_uri' => FALSE,
+            // @todo: Add default icon if none provided.
+          );
+        }
+        $resources_type_info = array_merge($resources_type_info, $resources_type_info_module);
+      }
+      // Let other modules alter the resources type info.
+      drupal_alter('resources_type_info', $resources_type_info);
+      cache_set('resources_type_info', $resources_type_info);
+
+      // Copy icons.
+      // @todo: Move it to config form as a button or trigger elsewhere.
+      _resources_copy_icons();
+    }
+  }
+
+  if (empty($type)) {
+    return $resources_type_info;
+  }
+  elseif (isset($resources_type_info[$type])) {
+    return $resources_type_info[$type];
+  }
 }
 
+/**
+ * Lookup resource type info array by file object.
+ *
+ * @param stdClass $file
+ *   File entity object that contains a valid $file->uri.
+ *
+ * @return array $info
+ *   Resource type info array.
+ *
+ * @todo Currently we don't restrict and validate scheme to be used only once in resources types.
+ *       It will take the first occurrence of 'scheme'. We might want to handle others as well. Find a way how!
+ */
+function resources_get_info_by_file($file) {
+  $resources_type_info = resources_get_info();
+  $scheme = file_uri_scheme($file->uri);
+  foreach ($resources_type_info as $resource_type_info) {
+    if ($resource_type_info['scheme'] == $scheme) {
+      return $resource_type_info;
+    }
+  }
+}
+
+/**
+ * Helper function to copy icons.
+ *
+ *   - Copies icons from icons directory into publicly available files directory.
+ */
+function _resources_copy_icons() {
+  $destination = variable_get('resources_icons_directory', 'public://resources-assets');
+
+  if (!file_prepare_directory($destination, FILE_CREATE_DIRECTORY)) {
+    throw new Exception("Unable to create directory $destination.");
+  }
+
+  $resources_type_info = resources_get_info();
+  foreach ($resources_type_info as $resource_type_info) {
+    if (isset($resource_type_info['icon']) && isset($resource_type_info['icon path'])) {
+      $file_uri = $resource_type_info['icon path'] . '/' . $resource_type_info['icon'];
+      $result = file_unmanaged_copy($file_uri, $destination, FILE_EXISTS_REPLACE);
+      if (!$result) {
+        throw new Exception("Unable to copy {$file_uri} to $destination.");
+      }
+    }
+  }
+}
 
 /**
  * Implements hook_theme().
@@ -167,8 +212,42 @@ function resources_theme($existing, $type, $theme, $path) {
       'path' => $path . '/themes',
       'template' => 'resource-youtube-video',
     ),
+    'resources_resource_icon' => array(
+      'variables' => array('file' => NULL, 'style_name' => NULL),
+      'file' => 'resources.theme.inc',
+      'path' => $path . '/themes',
+    ),
   );
 }
+
+/**
+ * Formatter view callback for resource icon formatter.
+ */
+function resources_resource_icon_view($file, $display, $langcode) {
+  $element = array(
+    '#theme' => 'resources_resource_icon',
+    '#file' => $file,
+    '#style_name' => $display['settings']['image_style'],
+  );
+
+  return $element;
+}
+
+/**
+ * Implements hook_file_formatter_FORMATTER_settings().
+ */
+function resources_resource_icon_settings($form, &$form_state, $settings) {
+  $element = array();
+  $element['image_style'] = array(
+    '#title' => t('Image style'),
+    '#type' => 'select',
+    '#options' => image_style_options(FALSE),
+    '#default_value' => $settings['image_style'],
+    '#empty_option' => t('None (original image)'),
+  );
+  return $element;
+}
+
 
 /**
  * Implement hook_stream_wrappers().
@@ -190,12 +269,23 @@ function resources_stream_wrappers() {
     'type' => STREAM_WRAPPERS_READ_VISIBLE,
   );
 
-  $stream_wrappers['entity'] = array(
+  $stream_wrappers['resource'] = array(
     'name' => t('Resources: Rendered file entity'),
-    'class' => 'ResourcesEntityStreamWrapper',
+    'class' => 'ResourcesGenericResourceStreamWrapper',
     'description' => t('This stream wrapper doesn\'t do anything, it is just needed for file system to work. We use file entity as a generic entity and rendering just fields.'),
     'type' => STREAM_WRAPPERS_READ_VISIBLE,
   );
+
+  foreach (resources_get_info() as $resource_type_info) {
+    if (!empty($resource_type_info['use generic streamwrapper'])) {
+      $stream_wrappers[$resource_type_info['scheme']] = array(
+        'name' => t('Resources generic Stream Wrapper'),
+        'class' => 'ResourcesGenericResourceStreamWrapper',
+        'description' => t('This stream wrapper doesn\'t do anything, it is just needed for file system to work. We use file entity as a generic entity and rendering just fields.'),
+        'type' => STREAM_WRAPPERS_READ_VISIBLE,
+      );
+    }
+  }
 
   return $stream_wrappers;
 }
@@ -489,4 +579,30 @@ function resources_file_displays_alter(&$displays, $file, $view_mode) {
   if (isset($displays['resources_file_fields'])) {
     $displays['resources_file_fields']['view_mode'] = $view_mode;
   }
+}
+
+
+/**
+ * Callback for when the file is saved.
+ *  - This callback is used to save any resource with a hash-like URL, that
+ *    does not require URL parsing.
+ *
+ * @param $file
+ * @param $form
+ * @param $form_state
+ * @return bool|object
+ */
+function resources_generic_resource_presave($file, $form, $form_state, $resource_type_info) {
+  if (empty($file->uri)) {
+    $uri = $resource_type_info['scheme'] . '://' . 'h/' . uniqid();
+    $new_file = file_uri_to_object($uri, FALSE);
+    $new_file->type = $file->type;
+    $new_file->display = $file->display;
+    $new_file->filename = $file->filename;
+  }
+  else {
+    $new_file = $file;
+  }
+
+  return $new_file;
 }

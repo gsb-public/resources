@@ -12,7 +12,7 @@ function resources_resource_twitter_presave($file, $form, $form_state) {
   $language = $form['field_twitter_url']['#language'];
   $widget_id = $form_state['values']['field_twitter_widget_id'][$language][0]['value'];
   $uri = resources_resource_twitter_parse($form_state['values']['field_twitter_url'][$language][0]['url'], $widget_id);
-
+  // @todo: This might go into a base class.
   if (empty($file->uri)) {
     $new_file = file_uri_to_object($uri, TRUE);
     $new_file->type = $file->type;
@@ -85,75 +85,6 @@ function resources_resource_twitter_parse($url, $widget_id = NULL) {
 
   $uri = trim($uri, '/');
   return $uri;
-}
-
-/**
- * Implements hook_file_formatter_FORMATTER_view().
- */
-function resources_resource_twitter_file_formatter_preview_view($file, $display, $langcode) {
-  $scheme = file_uri_scheme($file->uri);
-  // WYSIWYG does not yet support video inside a running editor instance.
-  if ($scheme == 'twitter' ) {
-    $element = array(
-      '#theme' => 'image_style',
-      '#style_name' => 'thumbnail',
-      '#path' => 'public://resources-assets/application-twitter.png',
-      '#options' => array(),
-    );
-
-    return $element;
-  }
-}
-
-/**
- * Implements hook_file_formatter_FORMATTER_view().
- */
-function resources_resource_twitter_file_formatter_widget_view($file, $display, $langcode) {
-  $twitter = new ResourcesTwitterStreamWrapper();
-  $twitter->setUri($file->uri);
-  $params = $twitter->get_parameters();
-  $href = $twitter->interpolateUrl();
-  $output = '';
-
-  if (!$href) {
-    return FALSE;
-  }
-
-  $options = array(
-    'attributes' => array(
-      'class' => array(
-        'twitter-timeline',
-      ),
-      'data-dnt' => 'true',
-      'data-widget-id' => $params['w'],
-    ),
-  );
-
-  if (!is_null($params['s'])) {
-    $url = 'https://api.twitter.com/1/statuses/oembed.json?id=' . $params['s'];
-    $response = drupal_http_request($url);
-    if (!isset($response->error)) {
-      $tweet_info = drupal_json_decode($response->data);
-      $output = $tweet_info['html'];
-    }
-  }
-  else {
-    if (!is_null($params['t'])) {
-      $options['attributes']['data-custom-timeline-id'] = $params['t'];
-    }
-    elseif (!is_null($params['u'])) {
-      $options['attributes']['data-screen-name'] = $params['u'];
-    }
-
-    $output = l($file->filename, $href, $options);
-    $output .= '<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?\'http\':\'https\';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>';
-  }
-
-  $element = array(
-    '#markup' => $output,
-  );
-
-  return $element;
 }
 
 /**
