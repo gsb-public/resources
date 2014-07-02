@@ -3,6 +3,9 @@
 // Hooks and callbacks for integrating with File Entity module for display.
 require_once dirname(__FILE__) . '/includes/resources.formatters.inc';
 
+/**
+ * Implements hook_init().
+ */
 function resources_init() {
   // Include the resources files.
   // Defaults to includes/[resource name].resources.inc you can specify what it
@@ -26,6 +29,7 @@ function resources_init() {
  */
 function resources_menu() {
   $items = array();
+
   // Adding a new resource.
   $items['resources/%ctools_js/add/%/%'] = array(
     'title' => 'Add resource',
@@ -68,13 +72,23 @@ function resources_menu() {
 }
 
 /**
+ * Implements hook_admin_paths().
+ */
+function resources_admin_paths() {
+  $paths = array(
+    'resources/*/*' => TRUE,
+  );
+  return $paths;
+}
+
+/**
  * Implement hook_resources_type_info().
  *
  * @return array
  */
 function resources_resources_type_info() {
   $resource_types['resource_image'] = array(
-    'label' => t('Resource Image'),
+    'label' => t('Image'),
     'scheme' => 'public',
     'include file' => '',
     'upload' => array(
@@ -85,8 +99,9 @@ function resources_resources_type_info() {
   );
 
   $resource_types['resource_twitter'] = array(
-    'label' => t('Twitter Feed or Tweet'),
+    'label' => t('Twitter'),
     'scheme' => 'twitter',
+    'unique_uri' => TRUE,
     'file presave callback' => 'resources_resource_twitter_presave',
     'settings callback' => 'resources_resource_twitter_settings_form',
     'icon' => 'application-twitter.png',
@@ -94,7 +109,7 @@ function resources_resources_type_info() {
   );
 
   $resource_types['resource_youtube'] = array(
-    'label' => t('Youtube video'),
+    'label' => t('Youtube'),
     'scheme' => 'ryoutube',
     'unique_uri' => TRUE,
     'file presave callback' => 'resources_resource_youtube_presave',
@@ -206,6 +221,16 @@ function _resources_copy_icons() {
  */
 function resources_theme($existing, $type, $theme, $path) {
   return array(
+    'resources_item_list' => array(
+      'variables' => array('items' => NULL, 'attributes' => array()),
+      'file' => 'resources.theme.inc',
+      'path' => $path . '/themes'
+    ),
+    'resources_item' => array(
+      'variables' => array('item' => NULL, 'operations' => array(), 'attributes' => array()),
+      'file' => 'resources.theme.inc',
+      'path' => $path . '/themes'
+    ),
     'resource_youtube_video' => array(
       'variables' => array('uri' => NULL, 'options' => array()),
       'file' => 'resource_youtube.theme.inc',
@@ -291,31 +316,17 @@ function resources_stream_wrappers() {
 }
 
 /**
- * Implement hook_field_extra_fields().
+ * Render resources browser callback.
  */
-function resources_field_extra_fields() {
-  // Add our resources widget.
-  $extra['node']['page']['form']['resources'] = array(
-    'label' => t('Resources'),
-    'description' => t('Resources widget'),
-    'weight' => 0,
-  );
-
-  return $extra;
-}
-
-/**
- * Implement hook_form_alter().
- */
-function resources_form_page_node_form_alter(&$form, &$form_state) {
+function resources_browser($nid) {
   $entity_info = entity_get_info();
   $view_mode_info = $entity_info['file']['view modes'];
-  $resources_markup = '';
 
-  dpm($form);
+  $resources_list_items = array();
   // If we are on the edit form then get all the resources.
-  if ($nid = $form['nid']['#value']) {
+  if (isset($nid) && is_numeric($nid)) {
     // Find the resources from the file_usage table.
+    // @todo: Extract to getter function.
     $result = db_query('SELECT * FROM {file_usage} f where f.id = :nid AND f.module = \'resources\'', array(':nid' => $nid));
 
     $view_modes_cache = array();
@@ -346,28 +357,49 @@ function resources_form_page_node_form_alter(&$form, &$form_state) {
       }
 
       // Get our markup for the resource preview.
-      $resources_markup .= _resources_generate_resource_preview_html($file, $view_modes);
+      $resources_list_items[] = _resources_generate_resource_preview_html($file, $view_modes);
     }
   }
   else {
     $nid = 'new';
   }
 
-  $resource_types = module_invoke_all('resources_type_info');
-
-  //Build the add links.
-  $add_links = '';
-  foreach ($resource_types as $resource_type => $info) {
-    $link = _resources_modal_link(t('Add @type', array('@type' => $info['label'])), 'resources/nojs/add/' . $resource_type . '/' . $nid);
-    $add_links .= '<li>' . $link . '</li>';
-  }
-
   // Add our resources form elements.
   $form['resources'] = array(
     '#type' => 'container',
+    '#attributes' => array(
+      'class' => array(
+        'js-hide',
+        'resources-browser-wrapper',
+      ),
+    ),
   );
-  $form['resources']['widget'] = array(
-    '#markup' => '<div class="resources-wrapper"><h4>' . t('Add Resources') . '</h4><ul>' . $add_links . '</ul><div class="resources">' . $resources_markup . '</div></div>',
+
+  $resource_types = resources_get_info();
+
+  // Build the add links.
+  $add_links = '';
+  foreach ($resource_types as $resource_type => $info) {
+    $link = _resources_modal_link($info['label'], 'resources/nojs/add/' . $resource_type . '/' . $nid);
+    $add_links .= '<li>' . $link . '</li>';
+  }
+
+  $add_resource_link = theme('resources_item', array(
+    'item' => '<div class="resource-add-new resource-operations-trigger">' . t('Add New') . '</div>',
+    'operations' => '<ul class="resource-operations">' . $add_links . '</ul>',
+    'attributes' => array(
+      'id' => 'resource-new'
+    )
+  ));
+
+  $resources = array_merge(array($add_resource_link), $resources_list_items);
+
+  $form['resources']['resources-list'] = array(
+    '#theme' => 'resources_item_list',
+    '#items' => $resources,
+    '#attributes' => array(
+      'id' => array('resources-wrapper'),
+    )
   );
 
   // If this is a new node then add our resources ids text field.
@@ -380,6 +412,88 @@ function resources_form_page_node_form_alter(&$form, &$form_state) {
 
   // Add our custom javascript.
   $form['#attached']['js'][] = drupal_get_path('module', 'resources') . '/js/resources.js';
+  $form['#attached']['css'][] = drupal_get_path('module', 'resources') . '/css/resources.css';
+
+  return $form;
+}
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter() for node_form().
+ */
+function resources_form_node_form_alter(&$form, &$form_state) {
+  // Add resources_browser to the node form.
+  $nid = !empty($form['nid']['#value']) ? $form['nid']['#value'] : 'new';
+  $form = array_merge($form, resources_browser($nid));
+}
+
+
+/**
+ * Implements hook_element_info_alter().
+ */
+function resources_element_info_alter(&$types) {
+  $types['text_format']['#pre_render'][] = 'resources_pre_render_text_format';
+}
+
+/**
+ * Process a text format widget to load and attach editors.
+ *
+ * The element's #id is used as reference to attach client-side editors.
+ */
+function resources_pre_render_text_format($element) {
+  if (!isset($element['#entity_type']) || $element['#entity_type'] != 'node') {
+    return $element;
+  }
+  // filter_process_format() copies properties to the expanded 'value' child
+  // element. Skip this text format widget, if it contains no 'format' or when
+  // the current user does not have access to edit the value.
+  if (!isset($element['format']) || !empty($element['value']['#disabled'])) {
+    return $element;
+  }
+
+  $format_field = &$element['format'];
+  $field = &$element['value'];
+  $settings = array(
+    'field' => $field['#id'],
+  );
+
+  // Use a hidden element for a single text format.
+  if (!$format_field['format']['#access']) {
+    $format_field['resources'] = array(
+      '#type' => 'hidden',
+      '#name' => $format_field['format']['#name'],
+      '#value' => reset($format_field['format']['#options']),
+      '#attributes' => array(
+        'id' => $format_field['format']['#id'],
+        'class' => array('resources-browser'),
+      ),
+    );
+    $format_field['resources']['#attached']['js'][] = array(
+      'data' => array(
+        'resources' => array(
+          'triggers' => array(
+            $format_field['format']['#id'] => $settings,
+          ),
+        ),
+      ),
+      'type' => 'setting',
+    );
+  }
+  // Otherwise, attach to text format selector.
+  else {
+    $format_field['format']['#attributes']['class'][] = 'resources-browser';
+    $format_field['format']['#attached']['js'][] = array(
+      'data' => array(
+        'resources' => array(
+          'triggers' => array(
+            $format_field['format']['#id'] => $settings,
+          ),
+        ),
+      ),
+      'type' => 'setting',
+    );
+  }
+
+  return $element;
 }
 
 /**
@@ -434,11 +548,33 @@ function _resources_generate_resource_preview_html($file, $view_modes = array())
     $view_mode_options .= '</select></div>';
   }
 
-
   // Render a preview of the file.
   $file_render_array = file_view_file($file, 'preview');
   $rendered_file = drupal_render($file_render_array);
 
+  // Get operations.
+  $operations_list = _resources_resource_get_operations($file);
+
+  $item  = '';
+  $item .= '<span class="resource-name" title="' . $file->filename . '">' . truncate_utf8($file->filename, 20,  FALSE, TRUE) . '</span>';
+  $item .= '<div class="resource-preview resource-operations-trigger">' . $rendered_file . '</div>';
+  $item .= !empty($view_mode_options) ? $view_mode_options : '';
+
+  $output = theme('resources_item', array(
+    'item' => $item,
+    'operations' => $operations_list,
+    'attributes' => array(
+      'id' => array('resource-' . $file->fid),
+    )
+  ));
+
+  return $output;
+}
+
+/**
+ * Build resource operations helper.
+ */
+function _resources_resource_get_operations($file) {
   // build the operation links.
   $attributes = array(
     'class' => array(
@@ -450,16 +586,12 @@ function _resources_generate_resource_preview_html($file, $view_modes = array())
   $edit_link = _resources_modal_link(t('Edit'), 'resources/nojs/edit/' . $file->fid);
   $delete_link = _resources_modal_link(t('Delete'), 'resources/nojs/delete/' . $file->fid);
 
-  // Put all the markup together.
-  $markup = '';
-  $markup .= '<div id="resource-' . $file->fid . '" class="resource">';
-  $markup .= '<div class="resource-preview">' . $rendered_file . '</div>';
-  $markup .= '<div class="resource-name">' . $file->filename . '</div>';
-  $markup .=  !empty($view_mode_options) ? $view_mode_options : '';
-  $markup .= '<div class="resource-operations">' . $add_link . ' ' . $edit_link . ' ' . $delete_link . '</div>';
-  $markup .= '</div>';
+  $operations_list = theme('item_list', array(
+    'attributes' => array('class' => array('resource-operations')),
+    'items' => array($add_link, $edit_link, $delete_link),
+  ));
 
-  return $markup;
+  return $operations_list;
 }
 
 /**
@@ -605,4 +737,30 @@ function resources_generic_resource_presave($file, $form, $form_state, $resource
   }
 
   return $new_file;
+}
+
+/**
+ * Implements hook_file_presave().
+ *
+ *  - Add a unique hash when using remote URIs, so we can add the same resource twice with same URI.
+ */
+function resources_file_presave($file) {
+  $resource_type_info = resources_get_info_by_file($file);
+
+  // Append a hash when saving files so that URI is unique,
+  // this in needed in order to create new resources with same URI and not reuse existing.
+  if (isset($resource_type_info['unique_uri']) && $resource_type_info['unique_uri']) {
+    if (isset($file->original)) {
+      $pattern = '/\/hash\/[^\/]+$/';
+      if (preg_match($pattern, $file->original->uri, $matches)) {
+        $existing_hash = $matches[0];
+      }
+    }
+    if (!empty($existing_hash)) {
+      $file->uri .= $existing_hash;
+    }
+    else {
+      $file->uri .= '/hash/' . uniqid();
+    }
+  }
 }

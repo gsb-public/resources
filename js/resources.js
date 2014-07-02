@@ -1,11 +1,55 @@
 (function ($) {
+
+  /**
+   * Attaches resources browser to every textarea in the form that has a resources-browser class.
+   */
+  Drupal.behaviors.attachResourcesBrowser = {
+    attach: function (context, settings) {
+      $('.resources-browser', context).once('resources-browser', function () {
+        var params = Drupal.settings.resources.triggers[this.id];
+        Drupal.resources.browserAttach(context, params);
+      });
+    }
+  };
+
+
+  /**
+   * Attaches outline behavior for regions associated with contextual links.
+   */
+  Drupal.behaviors.resourcesOperations = {
+    attach: function (context) {
+      var $wrapper = $('#resources-wrapper');
+      $wrapper.find('.resource-operations-trigger').once('resources-operations-trigger', function () {
+        $(this).hover(
+          function () {
+            $(this).closest('.resource-item').find('ul.resource-operations').stop(true, true).toggle();
+            return false;
+          },
+          function () {
+            $(this).closest('.resource-item').find('ul.resource-operations').stop(true, true).toggle();
+            return false;
+          }
+        );
+
+        $wrapper.find('ul.resource-operations').hover(
+          function () {
+            $(this).stop(true, true).show();
+          },
+          function () {
+            $(this).stop(true, true).hide();
+          }
+        )
+      });
+    }
+  };
+
   Drupal.behaviors.resources = {
     attach: function (context) {
-      $('a.resource-insert').click(function (event) {
+      $('a.resource-insert').once('resource-insert').click(function (event) {
         token = $(this).data('resource-info');
 
         viewMode = 'default';
-        $topElement = $(this).parent().parent().find('.resource-view-mode-selection select');
+        $topElement = $(this).closest('.resource-item').find('.resource-view-mode-selection select');
         if ($topElement.length) {
           viewMode = $topElement.val();
         }
@@ -16,6 +60,7 @@
       });
 
       if (typeof(insertTextarea) == 'undefined') {
+        // @todo: Find first text area that has resources enabled instead.
         insertTextarea = $('#edit-body textarea.text-full').get(0) || false;
       }
 
@@ -39,8 +84,39 @@
     }
   };
 
-  // General Insert API functions.
   Drupal.resources = Drupal.resources || {};
+
+  Drupal.resources.browserAttach = function (context, params) {
+    var browser_button = $('<a href="#" class="resources-browser-trigger">Insert resource</a>').click(function(event) {
+      event.preventDefault();
+      Drupal.resources.browserShow(this, params.field);
+    });
+    var browser_toolbar = $('<div class="resources-browser-toolbar"></div>').append(browser_button);
+    var browser_placeholder = $('<div class="resources-browser-placeholder"></div>');
+    var browser_wrapper = $("<div class='resources-toolbar-wrapper'></div>");
+
+    browser_wrapper.append(browser_toolbar, browser_placeholder);
+    $('#'+ params.field, context).before(browser_wrapper);
+    //$('#'+ params.field, context).before(browser_button, browser_placeholder);
+  };
+
+  Drupal.resources.browserShow = function(link, field) {
+    var resources_browser = $('.resources-browser-wrapper').clone(true);
+    $('.resources-browser-wrapper').remove();
+    $('#' + field).siblings('.resources-toolbar-wrapper').find('.resources-browser-placeholder').html(resources_browser);
+
+    if ($(link).hasClass('active')) {
+      $('.resources-browser-trigger').removeClass('active');
+      resources_browser.hide(400);
+    }
+    else {
+      $('.resources-browser-trigger').removeClass('active');
+      $(link).addClass('active');
+      resources_browser.show(400);
+    }
+  };
+
+  // General Insert API functions.
   Drupal.resources.insert = {
     /**
      * Insert content into the current (or last active) editor on the page. This

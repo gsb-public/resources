@@ -188,14 +188,6 @@ function resources_add_form_submit($form, &$form_state) {
     $file = call_user_func($resource_type_info['file presave callback'], $file, $form, $form_state, $resource_type_info);
   }
 
-  // Append a hash when saving files so that URI is unique,
-  // this in needed in order to create new resources with same URI and not reuse existing.
-  if (isset($resource_type_info['unique_uri']) && $resource_type_info['unique_uri']) {
-    if (isset($file->uri)) {
-      $file->uri .= '/hash/' . uniqid();
-    }
-  }
-
   // Save the form fields.
   // Keep in mind that the values for the Field API fields must be in
   // $form_state['values'] and not in ['storage']. This is true as long as

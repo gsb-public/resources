@@ -5,7 +5,8 @@
    */
   Drupal.ajax.prototype.commands.resources_add_resource = function (ajax, response, status) {
     resource = $(response.resource);
-    $('.resources').append(resource);
+
+    $('#resources-wrapper').append(resource);
     Drupal.attachBehaviors(resource, Drupal.settings);
 
     $elResourcesInput = $('#edit-resources-ids');
