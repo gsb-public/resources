@@ -369,7 +369,6 @@ function resources_browser($nid) {
     '#type' => 'container',
     '#attributes' => array(
       'class' => array(
-        'js-hide',
         'resources-browser-wrapper',
       ),
     ),
@@ -421,11 +420,22 @@ function resources_browser($nid) {
  * Implements hook_form_BASE_FORM_ID_alter() for node_form().
  */
 function resources_form_node_form_alter(&$form, &$form_state) {
+  // Attach resources browser in after_build to have fresh browser when form fails validation as form_alter is not
+  // executed once the form is cached.
+  $form['#after_build'][] = 'resources_node_form_after_build';
+}
+
+/**
+ * Node form after build callback.
+ *  - Attach resources browser.
+ */
+function resources_node_form_after_build($form, $form_state) {
   // Add resources_browser to the node form.
   $nid = !empty($form['nid']['#value']) ? $form['nid']['#value'] : 'new';
   $form = array_merge($form, resources_browser($nid));
-}
 
+  return $form;
+}
 
 /**
  * Implements hook_element_info_alter().

@@ -70,6 +70,10 @@ a.resources-browser-trigger {
   background: #fcfcfc;
 }
 
+.resources-browser-wrapper {
+  display: none;
+}
+
 .resources-browser-wrapper .form-item-resources-ids {
   display: none;
 }

@@ -103,7 +103,7 @@
   Drupal.resources.browserShow = function(link, field) {
     var resources_browser = $('.resources-browser-wrapper').clone(true);
     $('.resources-browser-wrapper').remove();
-    $('#' + field).siblings('.resources-toolbar-wrapper').find('.resources-browser-placeholder').html(resources_browser);
+    $('#' + field).closest('.form-item').find('.resources-browser-placeholder').html(resources_browser);
 
     if ($(link).hasClass('active')) {
       $('.resources-browser-trigger').removeClass('active');
