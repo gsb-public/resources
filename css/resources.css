@@ -73,7 +73,6 @@ a.resources-browser-trigger {
 .resources-browser-wrapper {
   display: none;
 }
-
-.resources-browser-wrapper .form-item-resources-ids {
+.resources-browser-wrapper .form-item {
   display: none;
 }
