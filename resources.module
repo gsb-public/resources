@@ -318,50 +318,53 @@ function resources_stream_wrappers() {
 /**
  * Render resources browser callback.
  */
-function resources_browser($nid) {
+function resources_browser($nid, $new_resources = array()) {
   $entity_info = entity_get_info();
   $view_mode_info = $entity_info['file']['view modes'];
 
   $resources_list_items = array();
+
   // If we are on the edit form then get all the resources.
   if (isset($nid) && is_numeric($nid)) {
     // Find the resources from the file_usage table.
-    // @todo: Extract to getter function.
-    $result = db_query('SELECT * FROM {file_usage} f where f.id = :nid AND f.module = \'resources\'', array(':nid' => $nid));
-
-    $view_modes_cache = array();
-    // Loop through the results to find each fid.
-    foreach ($result as $file_usage) {
-      // Get the file.
-      $file = file_load($file_usage->fid);
-
-      $view_modes = array();
-
-      // If we haven't built the list of view modes for this bundle then build it.
-      if (empty($view_modes_cache[$file->type])) {
-        // Get all the view mode settings.
-        $view_mode_settings = field_view_mode_settings('file', $file->type);
-        // Loop through the view modes looking for one's that are enabled.
-        foreach ($view_mode_settings as $view_mode => $settings) {
-          if ($view_mode !== 'preview' && $settings['custom_settings']) {
-            $view_modes[$view_mode] = $view_mode_info[$view_mode]['label'];
-          }
-        }
-
-        // Cache it so we don't have to build it again if we have the same type.
-        $view_modes_cache[$file->type] = $view_modes;
-      }
-      else {
-        // The view mode was in the cache so take it.
-        $view_modes = $view_modes_cache[$file->type];
-      }
-
-      // Get our markup for the resource preview.
-      $resources_list_items[] = _resources_generate_resource_preview_html($file, $view_modes);
-    }
+    $resources_fids = resources_get_resources($nid);
   }
   else {
     $nid = 'new';
+
+    // Display new resources if that's a new node.
+    $resources_fids = $new_resources;
+  }
+
+  $view_modes_cache = array();
+  // Loop through the results to find each fid.
+  foreach ($resources_fids as $fid) {
+    // Get the file.
+    $file = file_load($fid);
+
+    $view_modes = array();
+
+    // If we haven't built the list of view modes for this bundle then build it.
+    if (empty($view_modes_cache[$file->type])) {
+      // Get all the view mode settings.
+      $view_mode_settings = field_view_mode_settings('file', $file->type);
+      // Loop through the view modes looking for one's that are enabled.
+      foreach ($view_mode_settings as $view_mode => $settings) {
+        if ($view_mode !== 'preview' && $settings['custom_settings']) {
+          $view_modes[$view_mode] = $view_mode_info[$view_mode]['label'];
+        }
+      }
+
+      // Cache it so we don't have to build it again if we have the same type.
+      $view_modes_cache[$file->type] = $view_modes;
+    }
+    else {
+      // The view mode was in the cache so take it.
+      $view_modes = $view_modes_cache[$file->type];
+    }
+
+    // Get our markup for the resource preview.
+    $resources_list_items[] = _resources_generate_resource_preview_html($file, $view_modes);
   }
 
   // Add our resources form elements.
@@ -401,25 +404,38 @@ function resources_browser($nid) {
     )
   );
 
-  // If this is a new node then add our resources ids text field.
-  if ($nid === 'new') {
-    $form['resources']['resources_ids'] = array(
-      '#type' => 'textfield',
-      '#title' => t('resource ids'),
-    );
-  }
-
-  // Add our custom javascript.
-  $form['#attached']['js'][] = drupal_get_path('module', 'resources') . '/js/resources.js';
-  $form['#attached']['css'][] = drupal_get_path('module', 'resources') . '/css/resources.css';
-
   return $form;
+}
+
+/**
+ * Get resources fids by node nid.
+ *
+ * @param $nid
+ * @return $fids
+ */
+function resources_get_resources($nid) {
+  $result = db_query("SELECT fid FROM {file_usage} f WHERE f.id = :nid AND f.module = 'resources'",
+    array(':nid' => $nid))->fetchAllAssoc('fid');
+
+  return array_keys($result);
 }
 
 /**
  * Implements hook_form_BASE_FORM_ID_alter() for node_form().
  */
 function resources_form_node_form_alter(&$form, &$form_state) {
+  // If this is a new node then add our resources ids text field.
+  if (empty($form['nid']['#value'])) {
+    $form['resources_ids'] = array(
+      '#type' => 'textfield',
+      '#title' => t('resource ids'),
+    );
+  }
+
+  // Add resources javascript and styles.
+  $form['#attached']['js'][] = drupal_get_path('module', 'resources') . '/js/resources.js';
+  $form['#attached']['css'][] = drupal_get_path('module', 'resources') . '/css/resources.css';
+
   // Attach resources browser in after_build to have fresh browser when form fails validation as form_alter is not
   // executed once the form is cached.
   $form['#after_build'][] = 'resources_node_form_after_build';
@@ -430,9 +446,14 @@ function resources_form_node_form_alter(&$form, &$form_state) {
  *  - Attach resources browser.
  */
 function resources_node_form_after_build($form, $form_state) {
-  // Add resources_browser to the node form.
   $nid = !empty($form['nid']['#value']) ? $form['nid']['#value'] : 'new';
-  $form = array_merge($form, resources_browser($nid));
+  // Collect added resources for new node so we can display them in the resources browser.
+  $new_resources = array();
+  if (!empty($form_state['values']['resources_ids'])) {
+    $new_resources = explode(';', $form_state['values']['resources_ids']);
+  }
+  // Add resources_browser to the node form.
+  $form = array_merge($form, resources_browser($nid, $new_resources));
 
   return $form;
 }
