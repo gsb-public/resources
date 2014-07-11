@@ -46,10 +46,6 @@ function resources_file_formatter_info() {
       'view callback' => 'resources_resource_youtube_file_formatter_image_view',
       'settings callback' => 'resources_resource_youtube_file_formatter_image_settings',
     ),
-    'resources_file_fields' => array(
-      'label' => t('Resources: File fields only'),
-      'view callback' => 'resources_file_fields_view',
-    ),
     'resources_resource_icon' => array(
       'label' => t('Resources: Resource icon'),
       'default settings' => array(

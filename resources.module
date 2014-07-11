@@ -705,7 +705,7 @@ function resources_token_to_markup($match) {
   }
 
   // Render the file.
-  $element = file_view_file($parameters['file'], $parameters['display']);
+  $element = file_view($parameters['file'], $parameters['display']);
   return drupal_render($element);
 }
 
@@ -723,27 +723,6 @@ function _resources_modal_link($text, $url) {
   ctools_modal_add_js();
   return ctools_modal_text_button($text, $url, $text);
 }
-
-/**
- * Render file entity fields callback.
- */
-function resources_file_fields_view($file, $display, $langcode) {
-  field_attach_prepare_view('file', array($file->fid => $file), $display['view_mode']);
-  $element = field_attach_view('file', $file, $display['view_mode'], $langcode);
-
-  return $element;
-}
-
-/**
- * Implements hook_file_displays_alter().
- *  - Append view mode to display array so we can use it in our formatter.
- */
-function resources_file_displays_alter(&$displays, $file, $view_mode) {
-  if (isset($displays['resources_file_fields'])) {
-    $displays['resources_file_fields']['view_mode'] = $view_mode;
-  }
-}
-
 
 /**
  * Callback for when the file is saved.
