@@ -144,7 +144,25 @@ function resources_add_form($form, &$form_state) {
     '#value' => t('Save'),
   );
 
+  $form['#validate'][] = 'resources_form_file_validate_handler';
+
   return $form;
+}
+
+
+/**
+ * Resource file fields validate handler for add/edit form.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function resources_form_file_validate_handler($form, &$form_state) {
+  $resource_type_info = resources_get_info($form_state['resource_type']);
+
+  // Validate resource file fields with it's file validate callback, if any.
+  if (!empty($resource_type_info['file validate callback'])) {
+    call_user_func($resource_type_info['file validate callback'], $form, $form_state, $resource_type_info);
+  }
 }
 
 /**
@@ -355,6 +373,8 @@ function resources_edit_form($form, &$form_state) {
       '#type' => 'submit',
       '#value' => t('Save'),
     );
+
+    $form['#validate'][] = 'resources_form_file_validate_handler';
 
     return $form;
   }

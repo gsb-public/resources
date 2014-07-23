@@ -102,6 +102,7 @@ function resources_resources_type_info() {
     'label' => t('Twitter'),
     'scheme' => 'twitter',
     'unique_uri' => TRUE,
+    'file validate callback' => 'resources_resource_twitter_validate',
     'file presave callback' => 'resources_resource_twitter_presave',
     'settings callback' => 'resources_resource_twitter_settings_form',
     'icon' => 'application-twitter.png',
