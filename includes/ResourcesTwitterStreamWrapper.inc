@@ -20,27 +20,24 @@ class ResourcesTwitterStreamWrapper extends ResourcesReadOnlyStreamWrapper {
    * Returns a twitter url in the format.
    *
    * Overrides interpolateUrl() defined in ResourcesReadOnlyStreamWrapper.
-   * This is an exact copy of the function in ResourcesReadOnlyStreamWrapper,
-   * here in case that example is redefined or removed.
    */
   function interpolateUrl() {
     if ($params = $this->get_parameters()) {
       $url = $this->base_url . '/';
-      if (!is_null($params['q'])) {
-        $url .= 'search?q=' . $params['q'];
-      }
-      else {
-        if (is_null($params['u'])) {
-          return FALSE;
-        }
 
+      if (!empty($params['u'])) {
         $url .= $params['u'];
-        if (!is_null($params['s'])) {
+        if (!empty($params['s'])) {
           $url .= '/status/' . $params['s'];
         }
-        elseif (!is_null($params['t'])) {
+        elseif (!empty($params['t'])) {
           $url .= '/timelines/' . $params['t'];
         }
+      }
+      // If username is not set we probably deal with Widget URL.
+      else {
+        // Provide a placeholder URL. @see https://dev.twitter.com/docs/embedded-timelines#search
+        $url .= 'twitterapi';
       }
 
       return $url;

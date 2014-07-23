@@ -75,50 +75,39 @@ function resources_resource_twitter_presave($file, $form, $form_state) {
  * @param null $widget_id
  * @return bool|string
  */
-function resources_resource_twitter_parse($url, $widget_id = NULL) {
-  $scheme = 'twitter://';
-  $url_parts = parse_url($url);
-
-  if (stristr($url_parts['path'], '/status/')) {
-    $path_parts = explode('/', $url_parts['path']);
-    $status_location = array_search('status', $path_parts, TRUE);
-    $user = $path_parts[$status_location - 1];
-    $status_id = $path_parts[$status_location + 1];
+function resources_resource_twitter_parse($url) {
+  // Find out what URL we're provided with.
+  if (preg_match(TWITTER_STATUS_URL_PATTERN, $url, $matches)) {
     $params = array(
-      'u' => $user,
-      's' => $status_id,
+      'u' => $matches[1],
+      's' => $matches[2],
     );
   }
-  elseif (stristr($url_parts['path'], '/timelines/')) {
-    $path_parts = explode('/', $url_parts['path']);
-    $timelines_location = array_search('timelines', $path_parts, TRUE);
-    $user = $path_parts[$timelines_location - 1];
-    $timeline_id = $path_parts[$timelines_location + 1];
+  elseif (preg_match(TWITTER_COLLECTION_URL_PATTERN, $url, $matches)) {
     $params = array(
-      'u' => $user,
-      't' => $timeline_id,
+      'u' => $matches[1],
+      't' => $matches[2],
     );
   }
-  elseif (stristr($url_parts['path'], '/search')) {
-    $path_parts = drupal_parse_url($url);
-    if (!empty($path_parts['path'])) {
-      $params['q'] = $path_parts['path'];
-    }
+  elseif (preg_match(TWITTER_USER_TIMELINE_URL_PATTERN, $url, $matches)) {
+    $params['u'] = ltrim($matches[1], '@');
   }
-  else {
-    $path_parts = explode('/', $url_parts['path']);
-    if (!empty($path_parts[1])) {
-      $params['u'] = $path_parts[1];
-    }
+  elseif (preg_match(TWITTER_WIDGET_ID_URL_PATTERN, $url, $matches)) {
+    $params['w'] = $matches[1];
   }
 
+  // In case we don't have a widget id, set the default.
+  if (empty($params['w'])) {
+    $params['w'] = variable_get('resources_default_resource_twitter_widget_id', '');
+  }
+
+  // We should have some params by now, if not, something is wrong with validation.
   if (empty($params)) {
     return FALSE;
   }
 
-  $default_widget_id = variable_get('resources_default_resource_twitter_widget_id', '');
-  $params['w'] = empty($widget_id) ? $default_widget_id : $widget_id;
-
+  // @todo get sheme from resources_info.
+  $scheme = 'twitter://';
   $uri = $scheme;
   foreach ($params as $key => $value) {
     $uri .= $key . '/' . $value . '/';
