@@ -317,9 +317,7 @@ function resources_edit_form($form, &$form_state) {
   if ($file = $form_state['file']) {
 
     // Get the resource type information.
-    $resource_types = module_invoke_all('resources_type_info');
-    $resource_type = $form_state['resource_type'];
-    $resource_type_info = $resource_types[$resource_type];
+    $resource_type_info = resources_get_info($form_state['resource_type']);
 
     // Add file_entity methods.
     module_load_include('inc', 'file_entity', 'file_entity.pages');
@@ -370,7 +368,10 @@ function resources_edit_form($form, &$form_state) {
     }
 
     // Add a preview of the image.
-    $form['preview'] = file_view_file($file, 'preview');
+
+    if (!empty($resource_type_info['preview'])) {
+      $form['preview'] = file_view_file($file, 'preview');
+    }
 
     // Add form fields for the file type.
     field_attach_form('file', $file, $form, $form_state);

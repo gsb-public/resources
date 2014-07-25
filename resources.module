@@ -96,6 +96,7 @@ function resources_resources_type_info() {
       'uri_scheme' => 'public',
       'file_extensions' => 'jpg jpeg gif png',
     ),
+    'preview' => TRUE,
   );
 
   $resource_types['resource_twitter'] = array(
@@ -114,6 +115,7 @@ function resources_resources_type_info() {
     'scheme' => 'ryoutube',
     'unique_uri' => TRUE,
     'file presave callback' => 'resources_resource_youtube_presave',
+    'preview' => TRUE,
   );
 
   return $resource_types;
@@ -148,6 +150,7 @@ function resources_get_info($type = NULL) {
             'module' => $module,
             'use generic streamwrapper' => FALSE,
             'unique_uri' => FALSE,
+            'preview' => FALSE,
             // @todo: Add default icon if none provided.
           );
         }
