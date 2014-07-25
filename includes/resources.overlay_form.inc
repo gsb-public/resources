@@ -17,6 +17,10 @@ function resources_add($js, $type, $nid) {
   $form_state['cache'] = TRUE;
   $form_state['resource_type'] = $type;
 
+  // Set modal title
+  $resource_info = resources_get_info($type);
+  $form_state['title'] = t('Add @type', array('@type' => $resource_info['label']));
+
   // Add file entity form.
   form_load_include($form_state, 'pages.inc', 'file_entity');
 
@@ -235,6 +239,10 @@ function resources_edit($js, $file) {
   $form_state['ajax'] = $js;
   $form_state['build_info']['args'] = array();
   $form_state['cache'] = TRUE;
+
+  // Set modal title
+  $resource_info = resources_get_info_by_file($file);
+  $form_state['title'] = t('Edit @type', array('@type' => $resource_info['label']));
 
   // Get the resource type information.
   $resource_types = module_invoke_all('resources_type_info');
