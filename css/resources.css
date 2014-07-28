@@ -1,10 +1,13 @@
 .resource-add-new {
   width: 100px;
   height: 100px;
-  background: #CCC;
+  background: #ccc;
   text-align: center;
-  margin-top: 20px;
   line-height: 100px;
+}
+
+.resources-toolbar-wrapper {
+  max-width: 700px;
 }
 
 ul#resources-wrapper, ul.resource-operations {
@@ -12,11 +15,26 @@ ul#resources-wrapper, ul.resource-operations {
   list-style-type: none;
 }
 
+#resources-wrapper {
+/*  height: 140px;
+  max-width: 700px;
+  overflow-x: scroll;*/
+  padding: 5px;
+}
+
 #resources-wrapper li.resource-item {
+  border: 1px solid transparent;
+  display: inline-block;
   position: relative;
-  margin: 5px 20px;
-  float: left;
+  height: 110px;
   list-style-type: none;
+  padding: 5px;
+  vertical-align: top;
+  width: 110px;
+}
+
+#resources-wrapper li.resource-item:hover {
+  border: 1px dashed #ccc;
 }
 
 #resources-wrapper {
@@ -27,11 +45,11 @@ ul#resources-wrapper, ul.resource-operations {
 #resources-wrapper ul.resource-operations {
   display: none;
   position: absolute;
-  top: 20px;
+  top: 25px;
   left: 100px;
   z-index: 100;
   margin: 0;
-  background: #EEE;
+  background: #eee;
 }
 
 ul.resource-operations li {
@@ -43,7 +61,7 @@ ul.resource-operations li {
 a.resources-browser-trigger {
   border: 1px solid black;
   padding: 2px;
-  background: #eee;
+  background: #fff;
   text-decoration: none;
   color: #000;
   float: right;
@@ -76,4 +94,10 @@ a.resources-browser-trigger {
 
 .form-item-resources-ids {
   display: none;
+}
+
+.resource-name {
+  display: block;
+  line-height: 1.2;
+  margin-bottom: 3px;
 }
