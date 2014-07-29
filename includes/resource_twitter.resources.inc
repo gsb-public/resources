@@ -13,11 +13,6 @@ const TWITTER_WIDGET_ID_URL_PATTERN = '@twitter.com/settings/widgets/([0-9]+)/ed
 function resources_resource_twitter_validate($form, &$form_state) {
   $language = $form['field_twitter_url']['#language'];
 
-  if (empty($form_state['values']['field_twitter_url'][$language][0]['url'])) {
-    form_set_error('field_twitter_url', t('Twitter URL field is required.'));
-    return;
-  }
-
   $url = $form_state['values']['field_twitter_url'][$language][0]['url'];
 
   // Validate patters for various twitter URLs we support.
