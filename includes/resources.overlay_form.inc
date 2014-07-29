@@ -383,6 +383,7 @@ function resources_edit_form($form, &$form_state) {
       '#value' => t('Save'),
     );
 
+    $form['#validate'][] = 'resources_edit_form_validate';
     $form['#validate'][] = 'resources_form_file_validate_handler';
 
     return $form;
