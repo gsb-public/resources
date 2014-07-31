@@ -370,6 +370,8 @@ function resources_edit_form($form, &$form_state) {
     // Add a preview of the image.
 
     if (!empty($resource_type_info['preview'])) {
+      // Bypass browser file cache @see https://www.drupal.org/node/2313539
+      $file->cache = FALSE;
       $form['preview'] = file_view_file($file, 'preview');
     }
 
