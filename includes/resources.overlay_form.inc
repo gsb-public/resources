@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @file
+ *   Administration forms and interfaces for Resources module.
+ *
+ * @TODO: Refactor resources_add and resources_edit to reduce overlay form code duplication.
+ */
 
 /**
  * Callback for the add form.
@@ -88,9 +94,9 @@ function resources_add($js, $type, $nid) {
  */
 function resources_add_form($form, &$form_state) {
   // Get the resource type information.
-  $resource_types = module_invoke_all('resources_type_info');
   $resource_type = $form_state['resource_type'];
-  $resource_type_info = $resource_types[$resource_type];
+
+  $resource_type_info = resources_get_info($resource_type);
   $file_type = variable_get('resources_' . $resource_type . '_file_type', '');
 
   // Values that are specific to this resource type that are needed by
@@ -117,6 +123,7 @@ function resources_add_form($form, &$form_state) {
     '#weight' => -10,
   );
 
+  // @todo: What if upload field should use a different widget? We need to make it at least swappable.
   if (!empty($resource_type_info['upload'])) {
     // Options for upload widget.
     $options = $resource_type_info['upload'];
@@ -131,14 +138,13 @@ function resources_add_form($form, &$form_state) {
       '#required' => TRUE,
       '#pre_render' => array('file_managed_file_pre_render', 'file_entity_upload_validators_pre_render'),
     );
-
   }
 
   // Create a file object with just the file type so we can pull the right form.
   $file = new stdClass();
   $file->type = $file_type;
 
-  // Add fields from image bundle.
+  // Attach fields form elements.
   field_attach_form('file', $file, $form, $form_state);
 
   // Add the buttons.
@@ -148,25 +154,7 @@ function resources_add_form($form, &$form_state) {
     '#value' => t('Save'),
   );
 
-  $form['#validate'][] = 'resources_form_file_validate_handler';
-
   return $form;
-}
-
-
-/**
- * Resource file fields validate handler for add/edit form.
- *
- * @param $form
- * @param $form_state
- */
-function resources_form_file_validate_handler($form, &$form_state) {
-  $resource_type_info = resources_get_info($form_state['resource_type']);
-
-  // Validate resource file fields with it's file validate callback, if any.
-  if (!empty($resource_type_info['file validate callback'])) {
-    call_user_func($resource_type_info['file validate callback'], $form, $form_state, $resource_type_info);
-  }
 }
 
 /**
@@ -191,9 +179,8 @@ function resources_add_form_submit($form, &$form_state) {
   }
 
   // Get the resource type information.
-  $resource_types = module_invoke_all('resources_type_info');
   $resource_type = $form_state['resource_type'];
-  $resource_type_info = $resource_types[$resource_type];
+  // @todo: Needs a getter.
   $file_type = variable_get('resources_' . $resource_type . '_file_type', '');
 
   // Give it a type and default to displayed.
@@ -201,13 +188,9 @@ function resources_add_form_submit($form, &$form_state) {
   $file->display = TRUE;
 
   // If a filename is specified set the file filename to that.
+  // @todo: It's a required field, it should be always true.
   if (!empty($form_state['values']['filename'])) {
     $file->filename = $form_state['values']['filename'];
-  }
-
-  // Let the resource type owner alter the file data.
-  if (!empty($resource_type_info['file presave callback'])) {
-    $file = call_user_func($resource_type_info['file presave callback'], $file, $form, $form_state, $resource_type_info);
   }
 
   // Save the form fields.
@@ -216,8 +199,19 @@ function resources_add_form_submit($form, &$form_state) {
   // the fields are on the last page of the multi step form.
   entity_form_submit_build_entity('file', $file, $form, $form_state);
 
-  // Save the file.
-  file_save($file);
+  try {
+    // Save the remote file
+    $resource_type_handler = resources_get_type_handler($resource_type, $file);
+    // Providers decide if they need to save locally or somewhere else.
+    // This method returns a file object
+    $file = $resource_type_handler->save();
+  }
+  catch (ResourcesValidationException $e) {
+    form_set_error('', $e->getMessage());
+    // Rebuild form because we're failing validation in submit callback.
+    $form_state['rebuild'] = TRUE;
+    return;
+  }
 
   // Add the file to the form_state.
   $form_state['file'] = $file;
@@ -245,10 +239,11 @@ function resources_edit($js, $file) {
   $form_state['title'] = t('Edit @type', array('@type' => $resource_info['label']));
 
   // Get the resource type information.
-  $resource_types = module_invoke_all('resources_type_info');
+  $resource_types = resources_get_info();
 
   // Figure out the resource type from the scheme.
-  foreach ($resource_types as $resource_type =>$resource_type_info) {
+  // @todo: Extract into resources_get_info.
+  foreach ($resource_types as $resource_type => $resource_type_info) {
     if (variable_get('resources_' . $resource_type . '_file_type', '') === $file->type) {
       $form_state['resource_type'] = $resource_type;
       break;
@@ -322,14 +317,6 @@ function resources_edit_form($form, &$form_state) {
     // Add file_entity methods.
     module_load_include('inc', 'file_entity', 'file_entity.pages');
 
-    // Set the scheme
-    /**
-    $form['scheme'] = array(
-      '#type' => 'value',
-      '#value' => $resource_type_info['scheme'],
-    );
-     **/
-
     // Basic file information.
     // These elements are just values so they are not even sent to the client.
     foreach (array('fid', 'type', 'uid', 'timestamp') as $key) {
@@ -368,7 +355,6 @@ function resources_edit_form($form, &$form_state) {
     }
 
     // Add a preview of the image.
-
     if (!empty($resource_type_info['preview'])) {
       // Bypass browser file cache @see https://www.drupal.org/node/2313539
       $file->cache = FALSE;
@@ -385,9 +371,6 @@ function resources_edit_form($form, &$form_state) {
       '#value' => t('Save'),
     );
 
-    $form['#validate'][] = 'resources_edit_form_validate';
-    $form['#validate'][] = 'resources_form_file_validate_handler';
-
     return $form;
   }
 }
@@ -396,7 +379,6 @@ function resources_edit_form($form, &$form_state) {
  * Form validation handler for resources_edit_form().
  */
 function resources_edit_form_validate($form, &$form_state) {
-
   // Handle the replacement file if uploaded.
   if (isset($form_state['values']['replace_upload'])) {
     // Save the file as a temporary file.
@@ -434,21 +416,22 @@ function resources_edit_form_submit($form, &$form_state) {
     $file->filename = $form_state['values']['filename'];
   }
 
-  // Get the resource type information.
-  $resource_types = module_invoke_all('resources_type_info');
-  $resource_type = $form_state['resource_type'];
-  $resource_type_info = $resource_types[$resource_type];
-
-  // Let the resource type owner alter the file data.
-  if (!empty($resource_type_info['file presave callback'])) {
-    $file = call_user_func($resource_type_info['file presave callback'], $file, $form, $form_state, $resource_type_info);
-  }
-
   // Run entity form submit handling and save the file.
   entity_form_submit_build_entity('file', $file, $form, $form_state);
 
-  // Save the file.
-  file_save($file);
+  try {
+    // Save the remote file
+    $resource_type_handler = resources_get_type_handler($form_state['resource_type'], $file);
+    // Providers decide if they need to save locally or somewhere else.
+    // This method returns a file object
+    $file = $resource_type_handler->save();
+  }
+  catch (ResourcesValidationException $e) {
+    form_set_error('', $e->getMessage());
+    // Rebuild form because we're failing validation in submit callback.
+    $form_state['rebuild'] = TRUE;
+    return;
+  }
 
   // Tell them good job.
   $args = array(

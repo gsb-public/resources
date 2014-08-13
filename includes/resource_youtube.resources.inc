@@ -1,34 +1,6 @@
 <?php
 
 /**
- * Callback for when the file is saved.
- *
- * @param $file
- * @param $form
- * @param $form_state
- * @return bool|object
- */
-function resources_resource_youtube_presave($file, $form, $form_state) {
-  $language = $form['field_youtube_embed_code']['#language'];
-  $uri = resources_resource_youtube_parse($form_state['values']['field_youtube_embed_code'][$language][0]['value']);
-
-  // @todo: This might go into a base class.
-  if (empty($file->uri)) {
-    // We pass second argument as FALSE to always create new files.
-    $new_file = file_uri_to_object($uri, FALSE);
-    $new_file->type = $file->type;
-    $new_file->display = $file->display;
-    $new_file->filename = $file->filename;
-  }
-  else {
-    $new_file = $file;
-    $new_file->uri = $uri;
-  }
-
-  return $new_file;
-}
-
-/**
  * Parse the twitter url.
  *
  * @param $url

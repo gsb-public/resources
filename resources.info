@@ -9,3 +9,7 @@ files[] = includes/ResourcesReadOnlyStreamWrapper.inc
 files[] = includes/ResourcesTwitterStreamWrapper.inc
 files[] = includes/ResourcesYouTubeStreamWrapper.inc
 files[] = includes/ResourcesGenericResourceStreamWrapper.inc
+files[] = includes/handlers/ResourcesTwitterHandler.inc
+files[] = includes/handlers/ResourcesYoutubeHandler.inc
+files[] = includes/handlers/ResourcesEntityHandler.inc
+files[] = includes/handlers/ResourcesLocalFileHandler.inc

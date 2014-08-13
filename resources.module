@@ -90,10 +90,9 @@ function resources_resources_type_info() {
   $resource_types['resource_image'] = array(
     'label' => t('Image'),
     'scheme' => 'public',
-    'include file' => '',
+    'handler' => 'ResourcesLocalFileHandler',
     'upload' => array(
       'file_directory' => 'resources',
-      'uri_scheme' => 'public',
       'file_extensions' => 'jpg jpeg gif png',
     ),
     'preview' => TRUE,
@@ -103,8 +102,7 @@ function resources_resources_type_info() {
     'label' => t('Twitter'),
     'scheme' => 'twitter',
     'unique_uri' => TRUE,
-    'file validate callback' => 'resources_resource_twitter_validate',
-    'file presave callback' => 'resources_resource_twitter_presave',
+    'handler' => 'ResourcesTwitterHandler',
     'settings callback' => 'resources_resource_twitter_settings_form',
     'icon' => 'application-twitter.png',
     'icon path' => drupal_get_path('module', 'resources') . '/assets',
@@ -113,8 +111,8 @@ function resources_resources_type_info() {
   $resource_types['resource_youtube'] = array(
     'label' => t('Youtube'),
     'scheme' => 'ryoutube',
+    'handler' => 'ResourcesYoutubeHandler',
     'unique_uri' => TRUE,
-    'file presave callback' => 'resources_resource_youtube_presave',
     'preview' => TRUE,
   );
 
@@ -185,6 +183,7 @@ function resources_get_info($type = NULL) {
  *
  * @todo Currently we don't restrict and validate scheme to be used only once in resources types.
  *       It will take the first occurrence of 'scheme'. We might want to handle others as well. Find a way how!
+ * @todo: resources_get_info_by_file is relying on $file->uri, we need a better way to identify resource type
  */
 function resources_get_info_by_file($file) {
   $resources_type_info = resources_get_info();
@@ -701,12 +700,12 @@ function resources_token_to_markup($match) {
 
     $file = file_load($parameters['fid']);
     if (!$file) {
-      throw new Exception('Could not load media object');
+      throw new Exception('Could not load resource object');
     }
     $parameters['file'] = $file;
   }
   catch (Exception $e) {
-    watchdog('resources', 'Unable to render media from %tag. Error: %error', array('%tag' => $tag, '%error' => $e->getMessage()));
+    watchdog('resources', 'Unable to render resource from %tag. Error: %error', array('%tag' => $tag, '%error' => $e->getMessage()));
     return '';
   }
 
@@ -734,7 +733,7 @@ function _resources_modal_link($text, $url) {
  * Callback for when the file is saved.
  *  - This callback is used to save any resource with a hash-like URL, that
  *    does not require URL parsing.
- *
+ * @todo: Move to handler class.
  * @param $file
  * @param $form
  * @param $form_state
@@ -780,3 +779,80 @@ function resources_file_presave($file) {
     }
   }
 }
+
+/**
+ * Factory for resource type handler
+ *  - Instantiates a resource type handler from provided resource type and $file.
+ *
+ * @TODO: Move to ResourcesResourceBaseHandler as static factory method.
+ */
+function resources_get_type_handler($type, stdClass $file) {
+  $resource_type_info = resources_get_info($type);
+  if (!empty($resource_type_info['handler']) && class_exists($resource_type_info['handler'])) {
+    return new $resource_type_info['handler']($file, $resource_type_info);
+  }
+}
+
+/**
+ * Base ResourcesResourceBaseHandler class.
+ *
+ * Resource types handlers should extend this class to parse, validate and save resources.
+ */
+abstract class ResourcesResourceBaseHandler {
+
+  /**
+   * The constructor for the ResourcesResourceBaseHandler class. This method is also called
+   * from the classes that extend this class and override this method.
+   */
+  public function __construct() {
+
+  }
+
+  /**
+   * Returns a file object which can be used for validation and saving.
+   *
+   * @return StdClass
+   */
+  abstract public function getFileObject();
+
+  /**
+   * If required, implementors can validate resources fields.
+   */
+  public function validate() {
+  }
+
+  /**
+   * Before the file has been saved, implementors may do additional operations.
+   *
+   * @param object $file_obj
+   */
+  public function preSave(&$file_obj) {
+  }
+
+  /**
+   * Saves a file to the file_managed table (with file_save).
+   *
+   * @return StdClass
+   */
+  public function save() {
+    $file_obj = $this->getFileObject();
+    $this->preSave($file_obj);
+    file_save($file_obj);
+    $this->postSave($file_obj);
+    return $file_obj;
+  }
+
+  /**
+   * After the file has been saved, implementors may do additional operations.
+   *
+   * @param object $file_obj
+   */
+  public function postSave(&$file_obj) {
+  }
+}
+
+/**
+ * Class ResourcesValidationException.
+ *   - Basic exception class for resources validation exceptions.
+ */
+class ResourcesValidationException extends Exception {}
