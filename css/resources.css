@@ -1,3 +1,11 @@
+#modalBackdrop {
+  background-color: #000!important;
+}
+
+#resources-add-form #edit-upload-ajax-wrapper {
+  float: none;
+}
+
 .resource-add-new {
   width: 100px;
   height: 100px;
@@ -16,9 +24,11 @@ ul#resources-wrapper, ul.resource-operations {
 }
 
 #resources-wrapper {
-/*  height: 140px;
+  background: transparent;
+  height: 140px;
   max-width: 700px;
-  overflow-x: scroll;*/
+  overflow: hidden;
+  overflow-x: scroll;
   padding: 5px;
 }
 
@@ -35,11 +45,6 @@ ul#resources-wrapper, ul.resource-operations {
 
 #resources-wrapper li.resource-item:hover {
   border: 1px dashed #ccc;
-}
-
-#resources-wrapper {
-  overflow: hidden;
-  background: transparent;
 }
 
 #resources-wrapper ul.resource-operations {
