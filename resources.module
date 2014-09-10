@@ -485,6 +485,12 @@ function resources_pre_render_text_format($element) {
   }
 
   $format_field = &$element['format'];
+  $formats = array_keys($format_field['format']['#options']);
+  // Return original element if none of input formats can handle resources.
+  if (!resources_browser_is_available($formats)) {
+    return $element;
+  }
+
   $field = &$element['value'];
   $settings = array(
     'field' => $field['#id'],
@@ -528,6 +534,24 @@ function resources_pre_render_text_format($element) {
   }
 
   return $element;
+}
+
+/**
+ * Identify if resources browser is avaiable for any of input formats from provided list.
+ * @param array $formats
+ *   Array of input format format_ids.
+ * @return bool
+ *   Returns TRUE if any of passed formats has resources_filter filter enabled.
+ */
+function resources_browser_is_available($formats) {
+  foreach ($formats as $format_id) {
+    $filters = filter_list_format($format_id);
+    if (!empty($filters['resources_filter']) && $filters['resources_filter']->status) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
 }
 
 /**
