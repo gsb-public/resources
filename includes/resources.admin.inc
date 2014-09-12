@@ -28,13 +28,40 @@ function resources_admin_config($form, $form_state) {
       '#collapsed' => FALSE,
     );
 
+    $resource_type_default = variable_get('resources_' . $resource_type . '_file_type', array());
+
     // Add the file type selection.
     $form[$resource_type]['resources_' . $resource_type . '_file_type'] = array(
       '#type' => 'select',
       '#title' => t('Associated File Type'),
       '#options' => $available_file_types,
       '#required' => FALSE,
-      '#default_value' => variable_get('resources_' . $resource_type . '_file_type', array()),
+      '#default_value' => $resource_type_default,
+    );
+
+    $entity_info = entity_get_info();
+    $view_mode_info = $entity_info['file']['view modes'];
+
+    // Get all the view modes for the bundle.
+    $view_mode_settings = field_view_mode_settings('file', $resource_type_default);
+
+    $view_modes = array();
+
+    // Loop through each view mode to see if they are enabled.
+    foreach ($view_mode_settings as $view_mode => $settings) {
+      if ($settings['custom_settings']) {
+        $view_modes[$view_mode] = $view_mode_info[$view_mode]['label'];
+      }
+    }
+
+    // Add the file type selection.
+    $form[$resource_type]['resources_' . $resource_type . '_view_modes'] = array(
+      '#type' => 'select',
+      '#title' => t('Views Modes'),
+      '#options' => $view_modes,
+      '#required' => FALSE,
+      '#multiple' => TRUE,
+      '#default_value' => variable_get('resources_' . $resource_type . '_view_modes', array()),
     );
 
     // Only add settings if a callback has been specified for this type.

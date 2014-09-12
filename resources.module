@@ -597,6 +597,10 @@ function _resources_generate_resource_preview_html($file, $view_modes = array())
     }
   }
 
+  $resource_type_default = variable_get('resources_' .  $file->type . '_view_modes', array());
+  $resource_type_default = array_flip($resource_type_default);
+  $view_modes = array_intersect_key($view_modes, $resource_type_default);
+
   if (!empty($view_modes)) {
     // Build the view mode options.
     $view_mode_options = '<div class="resource-view-mode-selection"><select>';
