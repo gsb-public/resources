@@ -609,7 +609,8 @@ function _resources_generate_resource_preview_html($file, $view_modes = array())
   // Render a preview of the file.
   // Bypass browser file cache @see https://www.drupal.org/node/2313539
   $file->cache = FALSE;
-  $file_render_array = file_view_file($file, 'preview');
+  $view_mode = variable_get('resources_browser_preview_view_mode', 'preview');
+  $file_render_array = file_view_file($file, $view_mode);
   $rendered_file = drupal_render($file_render_array);
 
   // Get operations.

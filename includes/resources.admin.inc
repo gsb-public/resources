@@ -57,5 +57,21 @@ function resources_admin_config($form, $form_state) {
     }
   }
 
+  // Fieldset and Textfield for setting the 'Browser Preview View Mode'
+
+  $form['resources_browser_preview_view_mode_fieldset'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Browser Preview',
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+  );
+
+  $form['resources_browser_preview_view_mode_fieldset']['resources_browser_preview_view_mode'] = array(
+    '#type' => 'textfield',
+    '#title' => t('View Mode'),
+    '#required' => FALSE,
+    '#default_value' => variable_get('resources_browser_preview_view_mode', 'preview'),
+  );
+
   return system_settings_form($form);
 }
