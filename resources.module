@@ -679,8 +679,21 @@ function resources_filter_info() {
  * @TODO check for security probably pass text through filter_xss
  */
 function resources_filter($text) {
+  // Strip the p tags around resources if that's all that's around it.
+  $text = preg_replace_callback('/<p>\[\[resource::.*?\]\]<\/p>/', 'resources_strip_p', $text);
+  // Replace the resource.
   $text = preg_replace_callback('/\[\[resource::.*?\]\]/s', 'resources_token_to_markup', $text);
   return $text;
+}
+
+/**
+ * Replace p tags around resources if that's the only thing that surrounds it.
+ *
+ * @param $match
+ * @return replaced element.
+ */
+function resources_strip_p($match) {
+  return strip_tags($match[0]);
 }
 
 /**
