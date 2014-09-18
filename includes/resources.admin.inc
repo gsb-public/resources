@@ -94,10 +94,12 @@ function resources_admin_config($form, $form_state) {
   );
 
   $form['resources_browser_preview_view_mode_fieldset']['resources_browser_preview_view_mode'] = array(
-    '#type' => 'textfield',
-    '#title' => t('View Mode'),
+    '#type' => 'select',
+    '#title' => t('Views Modes'),
+    '#options' => $view_modes,
     '#required' => FALSE,
-    '#default_value' => variable_get('resources_browser_preview_view_mode', 'preview'),
+    '#multiple' => FALSE,
+    '#default_value' => variable_get('resources_browser_preview_view_mode', 'resource_browser_preview'),
   );
 
   return system_settings_form($form);
