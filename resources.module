@@ -116,6 +116,14 @@ function resources_resources_type_info() {
     'preview' => TRUE,
   );
 
+  $resource_types['resource_soundcloud'] = array(
+    'label' => t('SoundCloud'),
+    'scheme' => 'soundcloud',
+    'handler' => 'ResourcesSoundCloudHandler',
+    'unique_uri' => TRUE,
+    'preview' => TRUE,
+  );
+
   return $resource_types;
 }
 
@@ -240,6 +248,12 @@ function resources_theme($existing, $type, $theme, $path) {
       'path' => $path . '/themes',
       'template' => 'resource-youtube-video',
     ),
+    'resource_soundcloud' => array(
+      'variables' => array('uri' => NULL, 'options' => array()),
+      'file' => 'resource_soundcloud.theme.inc',
+      'path' => $path . '/themes',
+      'template' => 'resource-soundcloud',
+    ),
     'resources_resource_icon' => array(
       'variables' => array('file' => NULL, 'style_name' => NULL),
       'file' => 'resources.theme.inc',
@@ -294,6 +308,13 @@ function resources_stream_wrappers() {
     'name' => t('Resources: YouTube video'),
     'class' => 'ResourcesYouTubeStreamWrapper',
     'description' => t('YouTube video.'),
+    'type' => STREAM_WRAPPERS_READ_VISIBLE,
+  );
+
+  $stream_wrappers['soundcloud'] = array(
+    'name' => t('Resources: SoundCloud'),
+    'class' => 'ResourcesSoundCloudStreamWrapper',
+    'description' => t('SoundCloud.'),
     'type' => STREAM_WRAPPERS_READ_VISIBLE,
   );
 
@@ -421,6 +442,20 @@ function resources_get_resources($nid) {
     array(':nid' => $nid))->fetchAllAssoc('fid');
 
   return array_keys($result);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * @param $form
+ *   The form.
+ * @param $form_state
+ *   The form state.
+ */
+function resources_form_resources_edit_form_alter(&$form, &$form_state) {
+  if (isset($form['redirect'])) {
+    $form['redirect']['#access'] = FALSE;
+  }
 }
 
 /**

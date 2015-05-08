@@ -46,6 +46,25 @@ function resources_file_formatter_info() {
       'view callback' => 'resources_resource_youtube_file_formatter_image_view',
       'settings callback' => 'resources_resource_youtube_file_formatter_image_settings',
     ),
+    'resources_resource_soundcloud' => array(
+      'label' => t('Resources: SoundCloud'),
+      'file types' => array('video'),
+      'default settings' => array(
+        'width' => 640,
+        'height' => 390,
+      ),
+      'view callback' => 'resources_resource_soundcloud_file_formatter_video_view',
+      'settings callback' => 'resources_resource_soundcloud_file_formatter_video_settings',
+    ),
+    'resources_resource_soundcloud_image' => array(
+      'label' => t('Resources: SoundCloud Preview Image'),
+      'file types' => array('video'),
+      'default settings' => array(
+        'image_style' => '',
+      ),
+      'view callback' => 'resources_resource_soundcloud_file_formatter_image_view',
+      'settings callback' => 'resources_resource_soundcloud_file_formatter_image_settings',
+    ),
     'resources_resource_icon' => array(
       'label' => t('Resources: Resource icon'),
       'default settings' => array(
@@ -264,7 +283,6 @@ function resources_resource_youtube_file_formatter_video_settings($form, &$form_
   return $element;
 }
 
-
 /**
  * Implements hook_file_formatter_FORMATTER_view().
  */
@@ -300,6 +318,155 @@ function resources_resource_youtube_file_formatter_image_view($file, $display, $
  * Implements hook_file_formatter_FORMATTER_settings().
  */
 function resources_resource_youtube_file_formatter_image_settings($form, &$form_state, $settings) {
+  $element = array();
+  $element['image_style'] = array(
+    '#title' => t('Image style'),
+    '#type' => 'select',
+    '#options' => image_style_options(FALSE),
+    '#default_value' => $settings['image_style'],
+    '#empty_option' => t('None (original image)'),
+  );
+  return $element;
+}
+
+/**
+ * Implements hook_file_formatter_FORMATTER_view().
+ */
+function resources_resource_soundcloud_file_formatter_video_view($file, $display, $langcode) {
+  $scheme = file_uri_scheme($file->uri);
+  // WYSIWYG does not yet support video inside a running editor instance.
+  if ($scheme == 'soundcloud' && empty($file->override['wysiwyg'])) {
+    $element = array(
+      '#theme' => 'resource_soundcloud',
+      '#uri' => $file->uri,
+      '#options' => array(),
+    );
+    // Fake a default for attributes so the ternary doesn't choke.
+    $display['settings']['attributes'] = array();
+    $options = array(
+      'width',
+      'height',
+      'color',
+      'auto_play',
+      'hide_related',
+      'show_comments',
+      'show_user',
+      'show_reposts',
+      'visual'
+    );
+    foreach ($options as $setting) {
+      $element['#options'][$setting] = isset($file->override[$setting]) ? $file->override[$setting] : $display['settings'][$setting];
+    }
+    return $element;
+  }
+}
+
+/**
+ * Implements hook_file_formatter_FORMATTER_settings().
+ */
+function resources_resource_soundcloud_file_formatter_video_settings($form, &$form_state, $settings) {
+  $element = array();
+
+  $height = empty($settings['height']) ? '450' : $settings['height'];
+  $width = empty($settings['height']) ? '100%' : $settings['width'];
+  $color = empty($settings['color']) ? '' : $settings['color'];
+
+  $element['width'] = array(
+    '#title' => t('Width'),
+    '#type' => 'textfield',
+    '#default_value' => $width,
+    //'#element_validate' => array('_resources_youtube_validate_video_width_and_height'),
+  );
+  $element['height'] = array(
+    '#title' => t('Height'),
+    '#type' => 'textfield',
+    '#default_value' => $height,
+    //'#element_validate' => array('_resources_youtube_validate_video_width_and_height'),
+  );
+  if ($form['#view_mode'] == '1_2_width') {
+    $element['color'] = array(
+      '#title' => t('Color'),
+      '#type' => 'textfield',
+      '#default_value' => $color,
+      //'#element_validate' => array('_resources_youtube_validate_video_width_and_height'),
+    );
+  }
+  $element['auto_play'] = array(
+    '#title' => t('Auto Play'),
+    '#type' => 'checkbox',
+    '#default_value' => 0,
+    '#access' => FALSE
+  );
+  $element['hide_related'] = array(
+    '#title' => t('Hide Related'),
+    '#type' => 'checkbox',
+    '#default_value' => $settings['hide_related'],
+  );
+  $element['show_comments'] = array(
+    '#title' => t('Show Comments'),
+    '#type' => 'checkbox',
+    '#default_value' => $settings['show_comments'],
+  );
+  $element['show_user'] = array(
+    '#title' => t('Show User'),
+    '#type' => 'checkbox',
+    '#default_value' => $settings['show_user'],
+  );
+  $element['show_reposts'] = array(
+    '#title' => t('Show Reposts'),
+    '#type' => 'checkbox',
+    '#default_value' => $settings['show_reposts'],
+  );
+  if ($form['#view_mode'] == '1_2_width') {
+    $element['height']['#access'] = FALSE;
+    $element['height']['#default_value'] = '166';
+  }
+  if ($form['#view_mode'] == 'full_width') {
+    $element['visual'] = array(
+      '#title' => t('Visual'),
+      '#type' => 'hidden',
+      '#default_value' => 1,
+    );
+  }
+
+  return $element;
+}
+
+/**
+ * Implements hook_file_formatter_FORMATTER_view().
+ */
+function resources_resource_soundcloud_file_formatter_image_view($file, $display, $langcode) {
+  $scheme = file_uri_scheme($file->uri);
+  if ($scheme == 'soundcloud') {
+    $wrapper = file_stream_wrapper_get_instance_by_uri($file->uri);
+    $image_style = $display['settings']['image_style'];
+    $valid_image_styles = image_style_options(FALSE);
+    // @TODO: If autosubmit is removed and we allow view modes that insert
+    // images in the WYSIWYG, add file->overrides handling.
+    if (empty($image_style) || !isset($valid_image_styles[$image_style])) {
+      $element = array(
+        '#theme' => 'image',
+        '#path' => $wrapper->getOriginalThumbnailPath(),
+        '#alt' => isset($file->override['attributes']['alt']) ? $file->override['attributes']['alt'] : $file->filename,
+      );
+    }
+    else {
+      $element = array(
+        '#theme' => 'image_style',
+        '#style_name' => $image_style,
+        '#path' => $wrapper->getLocalThumbnailPath(),
+        '#alt' => isset($file->override['attributes']['alt']) ? $file->override['attributes']['alt'] : $file->filename,
+      );
+    }
+
+    return $element;
+  }
+}
+
+/**
+ * Implements hook_file_formatter_FORMATTER_settings().
+ */
+function resources_resource_soundcloud_file_formatter_image_settings($form, &$form_state, $settings) {
   $element = array();
   $element['image_style'] = array(
     '#title' => t('Image style'),
