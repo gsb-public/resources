@@ -41,7 +41,7 @@ class ResourcesSoundCloudStreamWrapper extends ResourcesReadOnlyStreamWrapper {
     $uri = 'soundcloud://u/' . $parts['u'] . '/id/' . $parts['id'] . '/hash/' . $parts['hash'];
     $file_object = file_uri_to_object($uri);
     $track_url = $file_object->field_soundcloud_url['und'][0]['value'];
-    $track_info = gsb_soundcloud_get_track_info($track_url);
+    $track_info = soundcloud_api_get_track_info($track_url);
     return $track_info->artwork_url;
   }
 

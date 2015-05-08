@@ -9,7 +9,7 @@
  */
 function resources_resource_soundcloud_parse($url) {
 
-  $track_info = gsb_soundcloud_get_track_info($url);
+  $track_info = soundcloud_api_get_track_info($url);
 
   return 'soundcloud://u/' . $track_info->user_id . '/id/' . $track_info->id;
 }
