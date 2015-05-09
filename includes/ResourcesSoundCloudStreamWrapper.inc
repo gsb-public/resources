@@ -42,7 +42,14 @@ class ResourcesSoundCloudStreamWrapper extends ResourcesReadOnlyStreamWrapper {
     $file_object = file_uri_to_object($uri);
     $track_url = $file_object->field_soundcloud_url['und'][0]['value'];
     $track_info = soundcloud_api_get_track_info($track_url);
-    return $track_info->artwork_url;
+    if ($track_info->artwork_url == null) {
+      $module_path = drupal_get_path('module', 'gsb_resources');
+      $default_thumbnail = $module_path . '/assets/soundcloud.png';
+      return $default_thumbnail;
+    }
+    else {
+      return $track_info->artwork_url;
+    }
   }
 
   function getLocalThumbnailPath() {
