@@ -357,6 +357,9 @@ function resources_resource_soundcloud_file_formatter_video_view($file, $display
     foreach ($options as $setting) {
       $element['#options'][$setting] = isset($file->override[$setting]) ? $file->override[$setting] : $display['settings'][$setting];
     }
+    if ($display['settings']['soundcloud_widget'] == 'Classic') {
+      unset($element['#options']['visual']);
+    }
     return $element;
   }
 }
@@ -368,29 +371,43 @@ function resources_resource_soundcloud_file_formatter_video_settings($form, &$fo
   $element = array();
 
   $height = empty($settings['height']) ? '450' : $settings['height'];
-  $width = empty($settings['height']) ? '100%' : $settings['width'];
+  $width = empty($settings['width']) ? '100%' : $settings['width'];
   $color = empty($settings['color']) ? '' : $settings['color'];
+  $soundcloud_widget = empty($settings['soundcloud_widget']) ? 'Classic' : $settings['soundcloud_widget'];
+
+  $element['soundcloud_widget'] = array(
+    '#type' => 'radios',
+    '#title' => 'SoundCloud Widget',
+    '#options' => array('Classic' => t('Classic'), 'Visual' => t('Visual')),
+    '#default_value' => $soundcloud_widget,
+    '#attributes' => $element['#attributes'],
+  );
 
   $element['width'] = array(
     '#title' => t('Width'),
     '#type' => 'textfield',
     '#default_value' => $width,
-    //'#element_validate' => array('_resources_youtube_validate_video_width_and_height'),
   );
   $element['height'] = array(
     '#title' => t('Height'),
     '#type' => 'textfield',
     '#default_value' => $height,
-    //'#element_validate' => array('_resources_youtube_validate_video_width_and_height'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="displays[resources_resource_soundcloud][settings][soundcloud_widget]"]' => array('value' => 'Visual'),
+      )
+    ),
   );
-  if ($form['#view_mode'] == '1_2_width') {
-    $element['color'] = array(
-      '#title' => t('Color'),
-      '#type' => 'textfield',
-      '#default_value' => $color,
-      //'#element_validate' => array('_resources_youtube_validate_video_width_and_height'),
-    );
-  }
+  $element['color'] = array(
+    '#title' => t('Color'),
+    '#type' => 'textfield',
+    '#default_value' => $color,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="displays[resources_resource_soundcloud][settings][soundcloud_widget]"]' => array('value' => 'Classic'),
+      )
+    ),
+  );
   $element['auto_play'] = array(
     '#title' => t('Auto Play'),
     '#type' => 'checkbox',
@@ -417,19 +434,36 @@ function resources_resource_soundcloud_file_formatter_video_settings($form, &$fo
     '#type' => 'checkbox',
     '#default_value' => $settings['show_reposts'],
   );
-  if ($form['#view_mode'] == '1_2_width') {
-    $element['height']['#access'] = FALSE;
-    $element['height']['#default_value'] = '166';
-  }
-  if ($form['#view_mode'] == 'full_width') {
-    $element['visual'] = array(
-      '#title' => t('Visual'),
-      '#type' => 'hidden',
-      '#default_value' => 1,
-    );
-  }
-
+  $element['visual'] = array(
+    '#title' => t('Visual'),
+    '#type' => 'hidden',
+    '#default_value' => 1,
+  );
   return $element;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for install_configure_form().
+ *
+ * Allows the profile to alter the site configuration form.
+ */
+function resources_form_file_entity_file_display_form_alter(&$form, $form_state) {
+  if ($form['#file_type'] == 'resource_soundcloud') {
+    $form['#submit'][] = '_resources_resource_soundcloud_file_formatter_video_settings_submit';
+  }
+}
+
+/**
+ * Form submission handler for file_entity_file_display_form.
+ */
+function _resources_resource_soundcloud_file_formatter_video_settings_submit($form, &$form_state) {
+  if ($form_state['values']['displays']['resources_resource_soundcloud']['settings']['soundcloud_widget'] == 'Classic') {
+    $form_state['values']['displays']['resources_resource_soundcloud']['settings']['height'] = '166';
+    $form_state['values']['displays']['resources_resource_soundcloud']['settings']['visual'] = null;
+  }
+  if ($form_state['values']['displays']['resources_resource_soundcloud']['settings']['soundcloud_widget'] == 'Visual') {
+    $form_state['values']['displays']['resources_resource_soundcloud']['settings']['visual'] = '1';
+  }
 }
 
 /**
