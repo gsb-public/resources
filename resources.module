@@ -64,11 +64,23 @@ function resources_menu() {
     'description' => 'Configure the behavior of resources.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('resources_admin_config'),
-    'access arguments' => array('administer content'),
+    'access arguments' => array('administer resources'),
     'file' => 'includes/resources.admin.inc',
   );
 
   return $items;
+}
+
+/**
+ * Implement hook_permission().
+ */
+function resources_permission() {
+  return array(
+    'administer resources' => array(
+      'title' => t('Administer resources'),
+      'description' => t('Edit the settings for resources.'),
+    ),
+  );
 }
 
 /**
