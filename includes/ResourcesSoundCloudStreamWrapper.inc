@@ -8,15 +8,15 @@
 
 /**
  *  Create an instance like this:
- *  $soundcloud = new ResourcesSoundCloudStreamWrapper('soundcloud://v/[video-code]');
+ *  $soundcloud = new ResourcesSoundCloudStreamWrapper('soundcloud://u/[userid]/id/[id]');
  */
 class ResourcesSoundCloudStreamWrapper extends ResourcesReadOnlyStreamWrapper {
 
   // Overrides $base_url defined in MediaReadOnlyStreamWrapper.
-  protected $base_url = 'http://soundcloud.com/watch';
+  protected $base_url = 'http://soundcloud.com';
 
   /**
-   * Returns a url in the format "http://soundcloud.com/watch?v=qsPQN4MiTeE".
+   * Returns a url in the format "http://soundcloud.com/id?v=qsPQN4MiTeE".
    *
    * Overrides interpolateUrl() defined in ResourcesReadOnlyStreamWrapper.
    * This is an exact copy of the function in ResourcesReadOnlyStreamWrapper,

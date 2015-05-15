@@ -15,10 +15,7 @@ function resources_resource_soundcloud_parse($url) {
 }
 
 /**
- * Check if a YouTube video id is valid.
- *
- * Check against the oembed stream instead of the gdata api site to
- * avoid "yt:quota too_many_recent_calls" errors.
+ * Check if a Soundcloud id is valid.
  *
  * @return
  *   Boolean.

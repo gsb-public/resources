@@ -39,6 +39,7 @@ class ResourcesSoundCloudHandler extends ResourcesResourceBaseHandler {
       //$new_file->type = $this->fileObject->type;
       //$new_file->display = $this->fileObject->display;
       $file->filename = $this->fileObject->filename;
+
       $this->fileObject = $file;
     }
     else {

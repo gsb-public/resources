@@ -53,8 +53,8 @@ function resources_file_formatter_info() {
         'width' => 640,
         'height' => 390,
       ),
-      'view callback' => 'resources_resource_soundcloud_file_formatter_video_view',
-      'settings callback' => 'resources_resource_soundcloud_file_formatter_video_settings',
+      'view callback' => 'resources_resource_soundcloud_file_formatter_player_view',
+      'settings callback' => 'resources_resource_soundcloud_file_formatter_player_settings',
     ),
     'resources_resource_soundcloud_image' => array(
       'label' => t('Resources: SoundCloud Preview Image'),
@@ -332,7 +332,7 @@ function resources_resource_youtube_file_formatter_image_settings($form, &$form_
 /**
  * Implements hook_file_formatter_FORMATTER_view().
  */
-function resources_resource_soundcloud_file_formatter_video_view($file, $display, $langcode) {
+function resources_resource_soundcloud_file_formatter_player_view($file, $display, $langcode) {
   $scheme = file_uri_scheme($file->uri);
   // WYSIWYG does not yet support video inside a running editor instance.
   if ($scheme == 'soundcloud' && empty($file->override['wysiwyg'])) {
@@ -352,13 +352,19 @@ function resources_resource_soundcloud_file_formatter_video_view($file, $display
       'show_comments',
       'show_user',
       'show_reposts',
-      'visual'
     );
     foreach ($options as $setting) {
       $element['#options'][$setting] = isset($file->override[$setting]) ? $file->override[$setting] : $display['settings'][$setting];
     }
-    if ($display['settings']['soundcloud_widget'] == 'Classic') {
-      unset($element['#options']['visual']);
+
+    switch($display['settings']['soundcloud_widget']) {
+      case 'Classic':
+        $element['#options']['height'] = 166;
+        break;
+      case 'Visual':
+        $element['#options']['width'] = '100%';
+        $element['#options']['visual'] = TRUE;
+        break;
     }
     return $element;
   }
@@ -367,7 +373,7 @@ function resources_resource_soundcloud_file_formatter_video_view($file, $display
 /**
  * Implements hook_file_formatter_FORMATTER_settings().
  */
-function resources_resource_soundcloud_file_formatter_video_settings($form, &$form_state, $settings) {
+function resources_resource_soundcloud_file_formatter_player_settings($form, &$form_state, $settings) {
   $element = array();
 
   $height = empty($settings['height']) ? '450' : $settings['height'];
@@ -387,6 +393,11 @@ function resources_resource_soundcloud_file_formatter_video_settings($form, &$fo
     '#title' => t('Width'),
     '#type' => 'textfield',
     '#default_value' => $width,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="displays[resources_resource_soundcloud][settings][soundcloud_widget]"]' => array('value' => 'Classic'),
+      )
+    ),
   );
   $element['height'] = array(
     '#title' => t('Height'),
@@ -433,11 +444,6 @@ function resources_resource_soundcloud_file_formatter_video_settings($form, &$fo
     '#title' => t('Show Reposts'),
     '#type' => 'checkbox',
     '#default_value' => $settings['show_reposts'],
-  );
-  $element['visual'] = array(
-    '#title' => t('Visual'),
-    '#type' => 'hidden',
-    '#default_value' => 1,
   );
   return $element;
 }
