@@ -29,10 +29,14 @@ function resources_preprocess_resource_soundcloud(&$variables) {
     'show_comments',
     'show_user',
     'show_reposts',
-    'visual'
+    'visual',
+    'inverse'
   );
   $parameters = '';
   foreach($options as $option) {
+    if (!isset($variables['options'][$option])) {
+      continue;
+    }
     if ($parameters != '') {
       $parameters .= '&amp;';
     }
