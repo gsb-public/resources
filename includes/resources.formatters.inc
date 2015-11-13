@@ -352,6 +352,7 @@ function resources_resource_soundcloud_file_formatter_player_view($file, $displa
       'show_comments',
       'show_user',
       'show_reposts',
+      'inverse',
     );
     foreach ($options as $setting) {
       $element['#options'][$setting] = isset($file->override[$setting]) ? $file->override[$setting] : $display['settings'][$setting];
@@ -360,6 +361,13 @@ function resources_resource_soundcloud_file_formatter_player_view($file, $displa
     switch($display['settings']['soundcloud_widget']) {
       case 'Classic':
         $element['#options']['height'] = 166;
+        break;
+      case 'Mini':
+        $element['#options']['height'] = 20;
+        unset($element['#options']['hide_related']);
+        unset($element['#options']['show_comments']);
+        unset($element['#options']['show_reposts']);
+        unset($element['#options']['visual']);
         break;
       case 'Visual':
         $element['#options']['width'] = '100%';
@@ -381,12 +389,13 @@ function resources_resource_soundcloud_file_formatter_player_settings($form, &$f
   $color = empty($settings['color']) ? '' : $settings['color'];
   $soundcloud_widget = empty($settings['soundcloud_widget']) ? 'Classic' : $settings['soundcloud_widget'];
 
+  $attributes = empty($element['#attributes']) ? array() : $element['#attributes'];
   $element['soundcloud_widget'] = array(
     '#type' => 'radios',
     '#title' => 'SoundCloud Widget',
-    '#options' => array('Classic' => t('Classic'), 'Visual' => t('Visual')),
+    '#options' => array('Classic' => t('Classic'), 'Mini' => t('Mini'), 'Visual' => t('Visual')),
     '#default_value' => $soundcloud_widget,
-    '#attributes' => $element['#attributes'],
+    '#attributes' => $attributes,
   );
 
   $element['width'] = array(
@@ -415,7 +424,7 @@ function resources_resource_soundcloud_file_formatter_player_settings($form, &$f
     '#default_value' => $color,
     '#states' => array(
       'visible' => array(
-        ':input[name="displays[resources_resource_soundcloud][settings][soundcloud_widget]"]' => array('value' => 'Classic'),
+        ':input[name="displays[resources_resource_soundcloud][settings][soundcloud_widget]"]' => array('value' => 'Classic', 'value' => 'Mini'),
       )
     ),
   );
@@ -428,22 +437,27 @@ function resources_resource_soundcloud_file_formatter_player_settings($form, &$f
   $element['hide_related'] = array(
     '#title' => t('Hide Related'),
     '#type' => 'checkbox',
-    '#default_value' => $settings['hide_related'],
+    '#default_value' => empty($settings['hide_related']) ? '' : $settings['hide_related'],
   );
   $element['show_comments'] = array(
     '#title' => t('Show Comments'),
     '#type' => 'checkbox',
-    '#default_value' => $settings['show_comments'],
+    '#default_value' => empty($settings['show_comments']) ? '' : $settings['show_comments'],
   );
   $element['show_user'] = array(
     '#title' => t('Show User'),
     '#type' => 'checkbox',
-    '#default_value' => $settings['show_user'],
+    '#default_value' => empty($settings['show_user']) ? '' : $settings['show_user'],
   );
   $element['show_reposts'] = array(
     '#title' => t('Show Reposts'),
     '#type' => 'checkbox',
-    '#default_value' => $settings['show_reposts'],
+    '#default_value' => empty($settings['show_reposts']) ? '' : $settings['show_reposts'],
+  );
+  $element['inverse'] = array(
+    '#title' => t('Inverse'),
+    '#type' => 'checkbox',
+    '#default_value' => empty($settings['inverse']) ? '' : $settings['inverse'],
   );
   return $element;
 }
