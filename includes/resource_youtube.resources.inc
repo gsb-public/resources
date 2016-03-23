@@ -20,8 +20,13 @@ function resources_resource_youtube_parse($embedCode) {
     preg_match($pattern, $embedCode, $matches);
     // @TODO: Parse is called often. Refactor so that valid ID is checked
     // when a video is added, but not every time the embedCode is parsed.
-    if (isset($matches[1]) && resources_resource_youtube_valid_id($matches[1])) {
-      return file_stream_wrapper_uri_normalize('ryoutube://v/' . $matches[1]);
+    try {
+      if (isset($matches[1]) && resources_resource_youtube_valid_id($matches[1])) {
+        return file_stream_wrapper_uri_normalize('ryoutube://v/' . $matches[1]);
+      }
+    }
+    catch (Exception $e) {
+      watchdog('resource_youtube', 'resources_resource_youtube_parse received the following exception: ' . $e, array(), WATCHDOG_ERROR);
     }
   }
 }
