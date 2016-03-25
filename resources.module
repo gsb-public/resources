@@ -925,9 +925,17 @@ abstract class ResourcesResourceBaseHandler {
    */
   public function save() {
     $file_obj = $this->getFileObject();
-    $this->preSave($file_obj);
-    file_save($file_obj);
-    $this->postSave($file_obj);
+    if ($file_obj->uri) {
+      $this->preSave($file_obj);
+      file_save($file_obj);
+      $this->postSave($file_obj);
+    }
+    else {
+      ctools_include('ajax');
+      ctools_include('modal');
+      ctools_include('context');
+      ctools_ajax_render_error('There was an error in adding the resource.');
+    }
     return $file_obj;
   }
 
