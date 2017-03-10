@@ -644,7 +644,7 @@ function _resources_generate_resource_preview_html($file, $view_modes = array())
     }
   }
 
-  $resource_type_default = variable_get('resources_' .  $file->type . '_view_modes', array());
+  $resource_type_default = variable_get('resources_' . $file->type . '_view_modes', array());
   $resource_type_default = array_flip($resource_type_default);
   $view_modes = array_intersect_key($view_modes, $resource_type_default);
 
@@ -659,10 +659,12 @@ function _resources_generate_resource_preview_html($file, $view_modes = array())
 
   // Render a preview of the file.
   // Bypass browser file cache @see https://www.drupal.org/node/2313539
+  if ($file) {
   $file->cache = FALSE;
   $view_mode = variable_get('resources_browser_preview_view_mode', 'preview');
   $file_render_array = file_view_file($file, $view_mode);
   $rendered_file = drupal_render($file_render_array);
+  }
 
   // Get operations.
   $operations_list = _resources_resource_get_operations($file);

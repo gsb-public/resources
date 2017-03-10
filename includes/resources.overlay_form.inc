@@ -66,7 +66,6 @@ function resources_add($js, $type, $nid) {
       if ($nid !== 'new') {
         file_usage_add($form_state['file'], 'resources', 'node', $nid);
       }
-
       // Add the javascript function we want to call.
       // Pass the rendered output of a resource and the fid.
       $commands[] = array(
@@ -228,7 +227,6 @@ function resources_add_form_submit($form, &$form_state) {
  * @return form
  */
 function resources_edit($js, $file) {
-
   // Setup ctools modal variables.
   $form_state['ajax'] = $js;
   $form_state['build_info']['args'] = array();
