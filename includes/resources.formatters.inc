@@ -475,17 +475,16 @@ function resources_resource_soundcloud_file_formatter_player_settings($form, &$f
 /**
  * Implements hook_file_formatter_FORMATTER_view().
  */
-function resources_resource_infogram_formatter_view($file, $display, $langcode)
-{
-  $scheme = file_uri_scheme($file->uri);
-  // WYSIWYG does not yet support video inside a running editor instance.
-  //if ($scheme == 'infogram' && empty($file->override['wysiwyg'])) {
+function resources_resource_infogram_formatter_view($file, $display, $langcode) {
+  $type = $file->type;
+  if ($type == 'resource_infogram' && !empty($file->field_infogram_embed_code) && !empty($file->field_infogram_embed_code['und'][0]['value'])) {
+    $code = $file->field_infogram_embed_code['und'][0]['value'];
     $element = array(
       '#theme' => 'resource_infogram',
       '#uri' => $file->uri,
-      '#options' => array('code' => $file->field_infogram_embed_code['und'][0]['value']),
+      '#options' => array('code' => $code),
     );
-  //}
+  }
   return $element;
 }
 

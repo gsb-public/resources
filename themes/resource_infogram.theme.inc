@@ -10,6 +10,5 @@
  * Preprocess function for theme('resource_infogram').
  */
 function resources_preprocess_resource_infogram(&$variables) {
-  $fred = 1;
   $variables['code'] = $variables['options']['code'];
 }
