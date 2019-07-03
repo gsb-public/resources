@@ -136,6 +136,14 @@ function resources_resources_type_info() {
     'preview' => TRUE,
   );
 
+  $resource_types['resource_infogram'] = array(
+    'label' => t('Infogram'),
+    'scheme' => 'infogram',
+    'handler' => 'ResourcesInfogramHandler',
+    'unique_uri' => TRUE,
+    'preview' => TRUE,
+  );
+
   return $resource_types;
 }
 
@@ -266,6 +274,12 @@ function resources_theme($existing, $type, $theme, $path) {
       'path' => $path . '/themes',
       'template' => 'resource-soundcloud',
     ),
+    'resource_infogram' => array(
+      'variables' => array('uri' => NULL, 'options' => array()),
+      'file' => 'resource_infogram.theme.inc',
+      'path' => $path . '/themes',
+      'template' => 'resource-infogram',
+    ),
     'resources_resource_icon' => array(
       'variables' => array('file' => NULL, 'style_name' => NULL),
       'file' => 'resources.theme.inc',
@@ -327,6 +341,13 @@ function resources_stream_wrappers() {
     'name' => t('Resources: SoundCloud'),
     'class' => 'ResourcesSoundCloudStreamWrapper',
     'description' => t('SoundCloud.'),
+    'type' => STREAM_WRAPPERS_READ_VISIBLE,
+  );
+
+  $stream_wrappers['infogram'] = array(
+    'name' => t('Resources: Infogram'),
+    'class' => 'ResourcesInfogramStreamWrapper',
+    'description' => t('Infogram.'),
     'type' => STREAM_WRAPPERS_READ_VISIBLE,
   );
 

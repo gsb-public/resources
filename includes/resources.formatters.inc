@@ -46,6 +46,16 @@ function resources_file_formatter_info() {
       'view callback' => 'resources_resource_youtube_file_formatter_image_view',
       'settings callback' => 'resources_resource_youtube_file_formatter_image_settings',
     ),
+    'resources_resource_infogram' => array(
+      'label' => t('Resources: Infogram'),
+      'file types' => array('resource_infogram'),
+      'default settings' => array(
+        'width' => 640,
+        'height' => 390,
+      ),
+      'view callback' => 'resources_resource_infogram_formatter_view',
+      'settings callback' => 'resources_resource_infogram_formatter_settings',
+    ),
     'resources_resource_soundcloud' => array(
       'label' => t('Resources: SoundCloud'),
       'file types' => array('video'),
@@ -459,6 +469,23 @@ function resources_resource_soundcloud_file_formatter_player_settings($form, &$f
     '#type' => 'checkbox',
     '#default_value' => empty($settings['inverse']) ? '' : $settings['inverse'],
   );
+  return $element;
+}
+
+/**
+ * Implements hook_file_formatter_FORMATTER_view().
+ */
+function resources_resource_infogram_formatter_view($file, $display, $langcode)
+{
+  $scheme = file_uri_scheme($file->uri);
+  // WYSIWYG does not yet support video inside a running editor instance.
+  //if ($scheme == 'infogram' && empty($file->override['wysiwyg'])) {
+    $element = array(
+      '#theme' => 'resource_infogram',
+      '#uri' => $file->uri,
+      '#options' => array('code' => $file->field_infogram_embed_code['und'][0]['value']),
+    );
+  //}
   return $element;
 }
 
