@@ -18,22 +18,7 @@ class ResourcesInfogramHandler extends ResourcesResourceBaseHandler {
   }
 
   public function parse() {
-    $wrapper = entity_metadata_wrapper('file', $this->fileObject);
-    $code = $wrapper->field_infogram_embed_code->value()['value'];
-
-    $dataId = "";
-    $needle = 'data-id="';
-
-    $pos = strpos($code,  $needle);
-    if ($pos) {
-      $start = $pos + strlen($needle);
-      $pos = strpos($code, '"', $start);
-      if ($pos) {
-        $len = $pos - $start;
-        $dataId = substr($code, $start, $len);
-      }
-    }
-
+    $dataId = $this->fileObject->field_infogram_data_id["und"][0]["value"];
     return $dataId;
   }
 

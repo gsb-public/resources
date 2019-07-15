@@ -478,7 +478,17 @@ function resources_resource_soundcloud_file_formatter_player_settings($form, &$f
 function resources_resource_infogram_formatter_view($file, $display, $langcode) {
   $type = $file->type;
   if ($type == 'resource_infogram' && !empty($file->field_infogram_embed_code) && !empty($file->field_infogram_embed_code['und'][0]['value'])) {
+    $data_id = $file->field_infogram_data_id["und"][0]["value"];
     $code = $file->field_infogram_embed_code['und'][0]['value'];
+    $needle = "<data-id>";
+    $pos = strpos($code, $needle);
+    if ($pos) {
+      $start = $pos;
+      $end = $pos + strlen($needle);
+      $code_part1 = substr($code, 0, $start);
+      $code_part2 = substr($code, $end);
+      $code = $code_part1 . $data_id . $code_part2;
+    }
     $element = array(
       '#theme' => 'resource_infogram',
       '#uri' => $file->uri,
