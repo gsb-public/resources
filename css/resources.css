@@ -135,6 +135,5 @@ a.resources-browser-trigger {
 
 #resources-edit-form .infogram-embed > iframe {
   width: 100% !important;
-  height: 25% !important;
   max-height: 400px;
 }
