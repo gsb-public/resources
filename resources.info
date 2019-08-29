@@ -5,6 +5,7 @@ description = "Adds resources to node pages."
 
 dependencies[] = file_entity
 
+
 files[] = includes/ResourcesReadOnlyStreamWrapper.inc
 files[] = includes/ResourcesTwitterStreamWrapper.inc
 files[] = includes/ResourcesYouTubeStreamWrapper.inc

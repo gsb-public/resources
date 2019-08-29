@@ -152,6 +152,7 @@ function resources_resources_type_info() {
     'preview' => TRUE,
   );
 
+
   return $resource_types;
 }
 
