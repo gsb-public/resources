@@ -14,6 +14,7 @@ files[] = includes/ResourcesGenericResourceStreamWrapper.inc
 files[] = includes/handlers/ResourcesTwitterHandler.inc
 files[] = includes/handlers/ResourcesYoutubeHandler.inc
 files[] = includes/handlers/ResourcesSoundCloudHandler.inc
+files[] = includes/handlers/ResourcesArt19Handler.inc
 files[] = includes/handlers/ResourcesEntityHandler.inc
 files[] = includes/handlers/ResourcesInfogramHandler.inc
 files[] = includes/handlers/ResourcesLocalFileHandler.inc

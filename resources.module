@@ -144,6 +144,14 @@ function resources_resources_type_info() {
     'preview' => TRUE,
   );
 
+  $resource_types['resource_art19'] = array(
+    'label' => t('Infogram'),
+    'scheme' => 'art19',
+    'handler' => 'ResourcesArt19Handler',
+    'unique_uri' => TRUE,
+    'preview' => TRUE,
+  );
+
   return $resource_types;
 }
 
