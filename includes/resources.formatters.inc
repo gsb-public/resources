@@ -56,6 +56,16 @@ function resources_file_formatter_info() {
       'view callback' => 'resources_resource_infogram_formatter_view',
       'settings callback' => 'resources_resource_infogram_formatter_settings',
     ),
+    'resources_resource_art19' => array(
+      'label' => t('Resources: Art19'),
+      'file types' => array('resource_art19'),
+      'default settings' => array(
+        'width' => 640,
+        'height' => 390,
+      ),
+      'view callback' => 'resources_resource_art19_formatter_view',
+      'settings callback' => 'resources_resource_art19_formatter_settings',
+    ),
     'resources_resource_soundcloud' => array(
       'label' => t('Resources: SoundCloud'),
       'file types' => array('video'),

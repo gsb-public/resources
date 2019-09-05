@@ -8,7 +8,7 @@
 
 /**
  *  Create an instance like this:
- *  $infogram = new ResourcesInfogramStreamWrapper('infogram://u/[userid]/id/[id]');
+ *  $art19 = new ResourcesArt19StreamWrapper('art19://u/[userid]/id/[id]');
  */
 class ResourcesArt19StreamWrapper extends ResourcesReadOnlyStreamWrapper {
 
