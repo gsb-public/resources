@@ -1,9 +1,9 @@
 <?php
 
 /**
- *  @file resources/includes/ResourcesInfogramStreamWrapper.inc
+ *  @file resources/includes/ResourcesArt19StreamWrapper.inc
  *
- *  Create a Infogram Stream Wrapper class for the Media/Resource module.
+ *  Create a Art19 Stream Wrapper class for the Media/Resource module.
  */
 
 /**
