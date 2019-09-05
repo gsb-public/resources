@@ -18,7 +18,7 @@ class ResourcesArt19Handler extends ResourcesResourceBaseHandler {
   }
 
   public function parse() {
-    $dataId = $this->fileObject->field_Art19_data_id["und"][0]["value"];
+    $dataId = $this->fileObject->field_art_19_data_id["und"][0]["value"];
     return $dataId;
   }
 
