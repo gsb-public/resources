@@ -10,6 +10,7 @@ files[] = includes/ResourcesTwitterStreamWrapper.inc
 files[] = includes/ResourcesYouTubeStreamWrapper.inc
 files[] = includes/ResourcesSoundCloudStreamWrapper.inc
 files[] = includes/ResourcesInfogramStreamWrapper.inc
+files[] = includes/ResourcesArt19StreamWrapper.inc
 files[] = includes/ResourcesGenericResourceStreamWrapper.inc
 files[] = includes/handlers/ResourcesTwitterHandler.inc
 files[] = includes/handlers/ResourcesYoutubeHandler.inc
