@@ -359,6 +359,13 @@ function resources_stream_wrappers() {
     'type' => STREAM_WRAPPERS_READ_VISIBLE,
   );
 
+  $stream_wrappers['art19'] = array(
+    'name' => t('Resources: Art19'),
+    'class' => 'ResourcesArt19StreamWrapper',
+    'description' => t('Art19.'),
+    'type' => STREAM_WRAPPERS_READ_VISIBLE,
+  );
+
   $stream_wrappers['resource'] = array(
     'name' => t('Resources: Rendered file entity'),
     'class' => 'ResourcesGenericResourceStreamWrapper',
