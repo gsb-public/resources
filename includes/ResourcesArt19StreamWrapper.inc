@@ -10,7 +10,7 @@
  *  Create an instance like this:
  *  $infogram = new ResourcesInfogramStreamWrapper('infogram://u/[userid]/id/[id]');
  */
-class ResourcesInfogramStreamWrapper extends ResourcesReadOnlyStreamWrapper {
+class ResourcesArt19StreamWrapper extends ResourcesReadOnlyStreamWrapper {
 
   // Overrides $base_url defined in MediaReadOnlyStreamWrapper.
   protected $base_url = '';
