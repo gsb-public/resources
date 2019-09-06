@@ -288,6 +288,12 @@ function resources_theme($existing, $type, $theme, $path) {
       'path' => $path . '/themes',
       'template' => 'resource-infogram',
     ),
+    'resource_art19' => array(
+      'variables' => array('uri' => NULL, 'options' => array()),
+      'file' => 'resource_art19.theme.inc',
+      'path' => $path . '/themes',
+      'template' => 'resource-art19',
+    ),
     'resources_resource_icon' => array(
       'variables' => array('file' => NULL, 'style_name' => NULL),
       'file' => 'resources.theme.inc',

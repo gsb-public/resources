@@ -485,22 +485,6 @@ function resources_resource_soundcloud_file_formatter_player_settings($form, &$f
 /**
  * Implements hook_file_formatter_FORMATTER_view().
  */
-function resources_resource_art19_formatter_view($file, $display, $langcode) {
-  $type = $file->type;
-  if ($type == 'resource_art19' && !empty($file->field_art_19_embed_code) && !empty($file->field_art_19_embed_code['und'][0]['value'])) {
-    $code = $file->field_art_19_embed_code['und'][0]['value'];
-    $element = array(
-      '#theme' => 'resource_art19',
-      '#uri' => $file->uri,
-      '#options' => array('code' => $code),
-    );
-  }
-  return $element;
-}
-
-/**
- * Implements hook_file_formatter_FORMATTER_view().
- */
 function resources_resource_infogram_formatter_view($file, $display, $langcode) {
   $type = $file->type;
   if ($type == 'resource_infogram' && !empty($file->field_infogram_embed_code) && !empty($file->field_infogram_embed_code['und'][0]['value'])) {
@@ -517,6 +501,22 @@ function resources_resource_infogram_formatter_view($file, $display, $langcode) 
     }
     $element = array(
       '#theme' => 'resource_infogram',
+      '#uri' => $file->uri,
+      '#options' => array('code' => $code),
+    );
+  }
+  return $element;
+}
+
+/**
+ * Implements hook_file_formatter_FORMATTER_view().
+ */
+function resources_resource_art19_formatter_view($file, $display, $langcode) {
+  $type = $file->type;
+  if ($type == 'resource_art19' && !empty($file->field_art_19_embed_code) && !empty($file->field_art_19_embed_code['und'][0]['value'])) {
+    $code = $file->field_art_19_embed_code['und'][0]['value'];
+    $element = array(
+      '#theme' => 'resource_art19',
       '#uri' => $file->uri,
       '#options' => array('code' => $code),
     );
