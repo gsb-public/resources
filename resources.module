@@ -512,6 +512,10 @@ function resources_form_resources_add_form_alter(&$form, &$form_state) {
     $form['field_title']['#access'] = false;
     unset($form['metatags']);
   }
+  if ($form["#bundle"] == "resource_art19") {
+    $form['field_title']['#access'] = false;
+    unset($form['metatags']);
+  }
 }
 
 /**
@@ -526,8 +530,12 @@ function resources_form_resources_edit_form_alter(&$form, &$form_state) {
   if (isset($form['redirect'])) {
     $form['redirect']['#access'] = FALSE;
   }
-  if ($form["#bundle"] == "resource_infogram") {
+  if ($form["#bundle"] == "resource_infogram" ) {
     $form['field_infogram_embed_code']['#access'] = false;
+    $form['field_title']['#access'] = false;
+    unset($form['metatags']);
+  }
+  if ($form["#bundle"] == "resource_art19") {
     $form['field_title']['#access'] = false;
     unset($form['metatags']);
   }
