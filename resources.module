@@ -149,7 +149,7 @@ function resources_resources_type_info() {
     'scheme' => 'art19',
     'handler' => 'ResourcesArt19Handler',
     'unique_uri' => TRUE,
-    'preview' => TRUE,
+    'preview' => FALSE,
   );
 
   return $resource_types;
@@ -737,7 +737,6 @@ function _resources_generate_resource_preview_html($file, $view_modes = array())
   $view_mode = variable_get('resources_browser_preview_view_mode', 'preview');
   $file_render_array = file_view_file($file, $view_mode);
   $rendered_file = drupal_render($file_render_array);
-  dpm($rendered_file);
   }
 
   // Get operations.
