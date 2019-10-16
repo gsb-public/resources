@@ -513,7 +513,6 @@ function resources_form_resources_add_form_alter(&$form, &$form_state) {
     unset($form['metatags']);
   }
   if ($form["#bundle"] == "resource_art19") {
-    $form['field_title']['#access'] = false;
     unset($form['metatags']);
   }
 }
@@ -536,7 +535,6 @@ function resources_form_resources_edit_form_alter(&$form, &$form_state) {
     unset($form['metatags']);
   }
   if ($form["#bundle"] == "resource_art19") {
-    $form['field_title']['#access'] = false;
     unset($form['metatags']);
   }
 }
