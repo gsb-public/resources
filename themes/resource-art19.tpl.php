@@ -11,6 +11,6 @@
  */
 
 ?>
-<div>
-    <?php print $code; ?>
+<div class="<?php print $classes; ?> media-art19-<?php print $id; ?>">
+  <?php print $code; ?>
 </div>
