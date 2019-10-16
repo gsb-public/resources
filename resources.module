@@ -730,11 +730,14 @@ function _resources_generate_resource_preview_html($file, $view_modes = array())
 
   // Render a preview of the file.
   // Bypass browser file cache @see https://www.drupal.org/node/2313539
-  if ($file) {
+  if ($file->type == 'resource_art19') {
+    $rendered_file = '<img src="/'.drupal_get_path('module', 'gsb_resources') . '/assets/art19.png'.'" width="100" height="100" alt="Art19 Resource" />';
+  } elseif ($file) {
   $file->cache = FALSE;
   $view_mode = variable_get('resources_browser_preview_view_mode', 'preview');
   $file_render_array = file_view_file($file, $view_mode);
   $rendered_file = drupal_render($file_render_array);
+  dpm($rendered_file);
   }
 
   // Get operations.
@@ -752,6 +755,7 @@ function _resources_generate_resource_preview_html($file, $view_modes = array())
       'id' => array('resource-' . $file->fid),
     )
   ));
+
 
   return $output;
 }
