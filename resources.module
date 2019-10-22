@@ -944,9 +944,11 @@ function resources_file_presave($file) {
 }
 
 function resources_preprocess_page($vars) {
-  if (strpos($vars['node']->field_body['und'][0]['value'], 'resource_art19') !== FALSE) {
-    drupal_add_js('https://web-player.art19.com/assets/current.js', 'external');
-    drupal_add_css('https://web-player.art19.com/assets/current.css', 'external');
+  if(isset($vars['node']->field_body)) {
+    if (strpos($vars['node']->field_body['und'][0]['value'], 'resource_art19') !== FALSE) {
+      drupal_add_js('https://web-player.art19.com/assets/current.js', 'external');
+      drupal_add_css('https://web-player.art19.com/assets/current.css', 'external');
+    }
   }
 }
 
