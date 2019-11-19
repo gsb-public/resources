@@ -21,4 +21,3 @@
 <div class="<?php print $classes; ?> media-soundcloud-<?php print $id; ?>">
   <iframe title="Embedded SoundCloud Media" width="<?php print $options['width']; ?>" height="<?php print $options['height']; ?>" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/<?php print $track_id; ?>&amp;<?php print $parameters ?>"></iframe>
 </div>
-</div>
